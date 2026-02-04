@@ -48,6 +48,9 @@
                             onAction="#onRefresh"/>
                 </HBox>
             </HBox>
+
+            <!-- Tab Bar (Open Files as Tabs) -->
+            <HBox fx:id="tabBar" style="-fx-background-color: #f0f0f0; -fx-border-color: #dddddd; -fx-border-width: 0 0 1 0; -fx-padding: 0;" minHeight="35"/>
         </VBox>
     </top>
 

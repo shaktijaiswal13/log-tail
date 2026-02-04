@@ -14,6 +14,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
+import javafx.scene.Cursor;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -51,6 +53,8 @@ public class ApplicationController {
     private Label statusLabel;
     @FXML
     private HBox menuBarContainer;
+    @FXML
+    private HBox tabBar;
 
     private String currentFilePath;
     private String currentFolderPath;
@@ -82,6 +86,11 @@ public class ApplicationController {
         openFilesListBox.setItems(openFiles);
         openFilesListBox.setCellFactory(param -> new OpenFileCell());
         openFilesListBox.setOnMouseClicked(event -> onOpenFileSelected());
+
+        // Setup listener for openFiles to update tab bar
+        openFiles.addListener((javafx.collections.ListChangeListener<String>) change -> {
+            updateTabBar();
+        });
 
         // Setup search field listener
         searchField.setOnKeyReleased(event -> filterContent());
@@ -274,7 +283,7 @@ public class ApplicationController {
     }
 
     private void filterContent() {
-        String searchTerm = searchField.getText().trim().toLowerCase();
+        String searchTerm = searchField.getText().trim();
 
         if (searchTerm.isEmpty()) {
             // Restore original content if search is cleared
@@ -283,18 +292,34 @@ public class ApplicationController {
             return;
         }
 
-        // Filter lines that contain search term
-        String[] lines = originalLogContent.split("\n");
-        StringBuilder filtered = new StringBuilder();
+        // Display original content with highlighting
+        logTextArea.clear();
+        logTextArea.appendText(originalLogContent);
 
-        for (String line : lines) {
-            if (line.toLowerCase().contains(searchTerm)) {
-                filtered.append(line).append("\n");
-            }
+        // Find and highlight all occurrences
+        String content = logTextArea.getText();
+        int startIndex = 0;
+        boolean foundAny = false;
+
+        while ((startIndex = content.indexOf(searchTerm, startIndex)) != -1) {
+            foundAny = true;
+            logTextArea.selectRange(startIndex, startIndex + searchTerm.length());
+            startIndex += searchTerm.length();
         }
 
-        logTextArea.clear();
-        logTextArea.appendText(filtered.toString());
+        // If found, scroll to first match and select it
+        if (foundAny) {
+            startIndex = content.indexOf(searchTerm);
+            logTextArea.selectRange(startIndex, startIndex + searchTerm.length());
+            logTextArea.setStyle("-fx-control-inner-background: #fffacd; -fx-text-fill: #333333; -fx-font-family: 'Courier New'; -fx-font-size: 10; -fx-padding: 12; -fx-border-color: transparent;");
+
+            // Scroll to first match
+            int line = content.substring(0, startIndex).split("\n", -1).length - 1;
+            logTextArea.positionCaret(startIndex);
+        } else {
+            // Reset styling if nothing found
+            logTextArea.setStyle("-fx-control-inner-background: #ffffff; -fx-text-fill: #333333; -fx-font-family: 'Courier New'; -fx-font-size: 10; -fx-padding: 12; -fx-border-color: transparent;");
+        }
     }
 
     // Setter for onBack callback
@@ -395,5 +420,78 @@ public class ApplicationController {
         Platform.runLater(() -> {
             openFilesListBox.refresh();
         });
+    }
+
+    // Update tab bar with open files as tabs
+    private void updateTabBar() {
+        Platform.runLater(() -> {
+            tabBar.getChildren().clear();
+
+            for (String filePath : openFiles) {
+                HBox tabContainer = createTab(filePath);
+                tabBar.getChildren().add(tabContainer);
+            }
+        });
+    }
+
+    // Create a single tab for a file
+    private HBox createTab(String filePath) {
+        HBox tab = new HBox(4);
+        tab.setStyle(
+            "-fx-padding: 6 8 6 8; " +
+            "-fx-background-color: #e8e8e8; " +
+            "-fx-border-color: #cccccc; " +
+            "-fx-border-width: 0 1 1 0; " +
+            "-fx-alignment: CENTER_LEFT;"
+        );
+        tab.setCursor(javafx.scene.Cursor.HAND);
+
+        // File name label
+        Label fileName = new Label(new File(filePath).getName());
+        fileName.setStyle("-fx-font-size: 9; -fx-text-fill: #333333;");
+
+        // Close button
+        Button closeTab = new Button("✕");
+        closeTab.setStyle(
+            "-fx-padding: 0 4 0 4; " +
+            "-fx-font-size: 8; " +
+            "-fx-background-color: transparent; " +
+            "-fx-text-fill: #666666; " +
+            "-fx-border-radius: 0; " +
+            "-fx-min-width: 16; " +
+            "-fx-min-height: 16; " +
+            "-fx-padding: 2;"
+        );
+
+        closeTab.setOnAction(event -> closeFile(filePath));
+
+        // On tab click, switch to this file
+        tab.setOnMouseClicked(event -> {
+            if (event.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                currentFilePath = filePath;
+                tailThreadRef.setActive(false);
+                pauseMode = false;
+                pauseBtn.setText("⏸ Pause");
+                pauseBtn.setStyle("-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #FF9800; -fx-text-fill: white; -fx-border-radius: 0;");
+                loadCurrentFile();
+                updateOpenFilesList();
+            }
+        });
+
+        tab.getChildren().addAll(fileName, closeTab);
+
+        // Highlight active tab
+        if (filePath.equals(currentFilePath)) {
+            tab.setStyle(
+                "-fx-padding: 6 8 6 8; " +
+                "-fx-background-color: #ffffff; " +
+                "-fx-border-color: #2196F3 #cccccc #ffffff #cccccc; " +
+                "-fx-border-width: 2 1 0 1; " +
+                "-fx-alignment: CENTER_LEFT;"
+            );
+            fileName.setStyle("-fx-font-size: 9; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+        }
+
+        return tab;
     }
 }
