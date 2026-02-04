@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21.0.2" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.taillogs.taillogs.screens.HomeController"
+            style="-fx-background-color: #f0f0f0;">
+
+    <center>
+        <VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: #f0f0f0;">
+            <padding>
+                <Insets top="60.0" right="20.0" bottom="20.0" left="20.0"/>
+            </padding>
+
+            <!-- Title -->
+            <Label text="Tail Logs" style="-fx-font-size: 48; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+
+            <!-- Subtitle -->
+            <Label text="View and monitor log files" style="-fx-font-size: 13; -fx-text-fill: #666666;"/>
+
+            <!-- Spacer -->
+            <Label text=""/>
+
+            <!-- Button Container -->
+            <VBox alignment="CENTER" spacing="15.0">
+                <!-- Open File Button -->
+                <Button fx:id="openFileBtn" text="📁 Open File"
+                        style="-fx-padding: 12 25 12 25; -fx-font-size: 16; -fx-font-weight: bold; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 0;"
+                        minWidth="300" minHeight="50"
+                        onAction="#onOpenFile"/>
+
+                <!-- Open Folder Button -->
+                <Button fx:id="openFolderBtn" text="📂 Open Folder"
+                        style="-fx-padding: 12 25 12 25; -fx-font-size: 16; -fx-font-weight: bold; -fx-background-color: #2196F3; -fx-text-fill: white; -fx-border-radius: 0;"
+                        minWidth="300" minHeight="50"
+                        onAction="#onOpenFolder"/>
+            </VBox>
+
+            <!-- Spacer -->
+            <Label text=""/>
+
+            <!-- Enter Application Button -->
+            <Button fx:id="enterAppBtn" text="→ Enter Application"
+                    style="-fx-padding: 8 20 8 20; -fx-font-size: 10; -fx-font-weight: bold; -fx-background-color: #9C27B0; -fx-text-fill: white; -fx-border-radius: 0;"
+                    onAction="#onEnterApplication"/>
+        </VBox>
+    </center>
+</BorderPane>

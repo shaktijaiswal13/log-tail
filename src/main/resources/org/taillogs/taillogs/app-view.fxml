@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21.0.2" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.taillogs.taillogs.screens.ApplicationController"
+            style="-fx-background-color: #ffffff;">
+
+    <!-- TOP: Menu Bar + Controls -->
+    <top>
+        <VBox spacing="0">
+            <!-- Menu Bar placeholder (will be filled by controller) -->
+            <HBox fx:id="menuBarContainer" style="-fx-background-color: #2196F3;"/>
+
+            <!-- Control Bar -->
+            <HBox spacing="15.0" style="-fx-background-color: #f8f8f8; -fx-padding: 10 15 10 15; -fx-border-color: #eeeeee; -fx-border-width: 0 0 1 0;">
+                <!-- Left Controls -->
+                <HBox spacing="15.0" HBox.hgrow="ALWAYS">
+                    <Button fx:id="toggleFilesBtn" text="☰ Files" minWidth="70" minHeight="30"
+                            style="-fx-padding: 6 12 6 12; -fx-font-size: 10; -fx-font-weight: bold; -fx-background-color: #333333; -fx-text-fill: white; -fx-border-radius: 0;"
+                            onAction="#onToggleSidebar"/>
+                    <Label fx:id="fileInfoLabel" text="Ready" style="-fx-font-size: 10; -fx-text-fill: #666666;"/>
+                </HBox>
+
+                <!-- Right Controls -->
+                <Region HBox.hgrow="ALWAYS"/>
+                <HBox spacing="4.0">
+                    <Button fx:id="pauseBtn" text="⏸ Pause" minWidth="80" minHeight="30"
+                            style="-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #FF9800; -fx-text-fill: white; -fx-border-radius: 0;"
+                            onAction="#onTogglePause"/>
+                    <Button fx:id="clearBtn" text="✕ Clear" minWidth="70" minHeight="30"
+                            style="-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #f44336; -fx-text-fill: white; -fx-border-radius: 0;"
+                            onAction="#onClear"/>
+                    <Button fx:id="refreshBtn" text="🔄 Refresh" minWidth="80" minHeight="30"
+                            style="-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 0;"
+                            onAction="#onRefresh"/>
+                </HBox>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- CENTER: Main Content Area -->
+    <center>
+        <HBox spacing="0" style="-fx-background-color: #ffffff;">
+            <!-- LEFT SIDEBAR -->
+            <VBox minWidth="250" prefWidth="250" style="-fx-background-color: #f5f5f5; -fx-border-color: #eeeeee; -fx-border-width: 0 1 0 0;">
+                <padding>
+                    <Insets top="12" right="8" bottom="12" left="12"/>
+                </padding>
+
+                <!-- Open Files Section (Only Section) -->
+                <Label text="📂 Open Files" style="-fx-font-size: 11; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+                <ListView fx:id="openFilesListBox" VBox.vgrow="ALWAYS"
+                          style="-fx-background-color: #ffffff; -fx-control-inner-background: #ffffff; -fx-text-fill: #333333; -fx-font-size: 9; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;">
+                </ListView>
+            </VBox>
+
+            <!-- RIGHT CONTENT AREA -->
+            <VBox HBox.hgrow="ALWAYS" spacing="0" style="-fx-background-color: #ffffff;">
+                <!-- Search Bar -->
+                <HBox spacing="8.0" style="-fx-background-color: #ffffff; -fx-padding: 10 12 10 12; -fx-border-color: #eeeeee; -fx-border-width: 0 0 1 0;">
+                    <Label text="🔍" style="-fx-font-size: 11; -fx-text-fill: #666666;"/>
+                    <TextField fx:id="searchField" HBox.hgrow="ALWAYS"
+                               style="-fx-font-size: 10; -fx-padding: 5; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-background-color: #f5f5f5;"
+                               promptText="Search log content..."/>
+                </HBox>
+
+                <!-- Text Display Area -->
+                <TextArea fx:id="logTextArea" VBox.vgrow="ALWAYS"
+                          style="-fx-control-inner-background: #ffffff; -fx-text-fill: #333333; -fx-font-family: 'Courier New'; -fx-font-size: 10; -fx-padding: 12; -fx-border-color: transparent;">
+                    <wrapText>false</wrapText>
+                </TextArea>
+
+                <!-- Status Bar -->
+                <Label fx:id="statusLabel" text="Ready" style="-fx-font-size: 8; -fx-text-fill: #666666; -fx-padding: 4 12 4 12; -fx-background-color: #f0f0f0; -fx-border-color: #eeeeee; -fx-border-width: 1 0 0 0;"/>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>
