@@ -15,7 +15,7 @@ import org.taillogs.taillogs.ui.MenuBarCreator;
 import java.io.File;
 import java.io.IOException;
 
-public class HelloApplication extends Application {
+public class MainApplication extends Application {
     private Stage primaryStage;
     private Scene homeScene;
     private Scene appScene;
@@ -85,12 +85,18 @@ public class HelloApplication extends Application {
             @Override
             public void onOpenFile() {
                 FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Select a log file");
-                fileChooser.getExtensionFilters().addAll(
-                        new FileChooser.ExtensionFilter("Log files (*.log)", "*.log"),
-                        new FileChooser.ExtensionFilter("Text files (*.txt)", "*.txt"),
-                        new FileChooser.ExtensionFilter("All files (*.*)", "*.*")
-                );
+                fileChooser.setTitle("Select a file");
+
+                // Add all files first (so it's the default)
+                FileChooser.ExtensionFilter allFilesFilter = new FileChooser.ExtensionFilter("All files (*.*)", "*.*");
+                FileChooser.ExtensionFilter logFilter = new FileChooser.ExtensionFilter("Log files (*.log)", "*.log");
+                FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text files (*.txt)", "*.txt");
+
+                fileChooser.getExtensionFilters().addAll(allFilesFilter, logFilter, txtFilter);
+
+                // Set All files as the default filter
+                fileChooser.setSelectedExtensionFilter(allFilesFilter);
+
                 File selectedFile = fileChooser.showOpenDialog(primaryStage);
                 if (selectedFile != null) {
                     appController.setCurrentFile(selectedFile.getAbsolutePath());

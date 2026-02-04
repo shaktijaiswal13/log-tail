@@ -29,13 +29,17 @@ public class HomeController {
     @FXML
     protected void onOpenFile() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select a log file");
+        fileChooser.setTitle("Select a file");
 
+        // Add all files first (so it's the default)
+        FileChooser.ExtensionFilter allFilter = new FileChooser.ExtensionFilter("All files (*.*)", "*.*");
         FileChooser.ExtensionFilter logFilter = new FileChooser.ExtensionFilter("Log files (*.log)", "*.log");
         FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text files (*.txt)", "*.txt");
-        FileChooser.ExtensionFilter allFilter = new FileChooser.ExtensionFilter("All files (*.*)", "*.*");
 
-        fileChooser.getExtensionFilters().addAll(logFilter, txtFilter, allFilter);
+        fileChooser.getExtensionFilters().addAll(allFilter, logFilter, txtFilter);
+
+        // Set All files as the default filter
+        fileChooser.setSelectedExtensionFilter(allFilter);
 
         Stage stage = (Stage) openFileBtn.getScene().getWindow();
         File selectedFile = fileChooser.showOpenDialog(stage);
