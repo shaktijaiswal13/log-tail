@@ -174,11 +174,11 @@ public class ApplicationController {
                 fileThreadRefs.get(currentFilePath).setActive(false);
             }
             pauseBtn.setText("▶ Resume");
-            pauseBtn.setStyle("-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 0;");
+            pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
             statusLabel.setText("Paused");
         } else {
             pauseBtn.setText("⏸ Pause");
-            pauseBtn.setStyle("-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #FF9800; -fx-text-fill: white; -fx-border-radius: 0;");
+            pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
             if (currentFilePath != null) {
                 // Create new thread ref if needed
                 if (!fileThreadRefs.containsKey(currentFilePath)) {
@@ -350,14 +350,15 @@ public class ApplicationController {
         // Close button
         Button closeTab = new Button("✕");
         closeTab.setStyle(
-            "-fx-padding: 0 4 0 4; " +
+            "-fx-padding: 2 4 2 4; " +
             "-fx-font-size: 8; " +
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: #666666; " +
+            "-fx-background-color: white; " +
+            "-fx-text-fill: black; " +
+            "-fx-border-color: #333333; " +
+            "-fx-border-width: 1; " +
             "-fx-border-radius: 0; " +
-            "-fx-min-width: 16; " +
-            "-fx-min-height: 16; " +
-            "-fx-padding: 2;"
+            "-fx-min-width: 20; " +
+            "-fx-min-height: 18;"
         );
 
         closeTab.setOnAction(event -> closeFile(filePath));
