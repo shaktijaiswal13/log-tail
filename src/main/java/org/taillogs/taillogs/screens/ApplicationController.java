@@ -34,8 +34,6 @@ import java.util.Map;
 
 public class ApplicationController {
     @FXML
-    private Button toggleFilesBtn;
-    @FXML
     private Label fileInfoLabel;
     @FXML
     private Button pauseBtn;
@@ -165,11 +163,6 @@ public class ApplicationController {
             statusLabel.setText("Tailing: " + new File(currentFilePath).getName());
             originalLogContent = logTextArea.getText();
         }
-    }
-
-    @FXML
-    protected void onToggleSidebar() {
-        // Toggle sidebar visibility (for future implementation)
     }
 
     @FXML

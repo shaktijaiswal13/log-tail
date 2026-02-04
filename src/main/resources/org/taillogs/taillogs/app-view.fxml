@@ -27,12 +27,7 @@
             <!-- Control Bar -->
             <HBox spacing="15.0" style="-fx-background-color: #f8f8f8; -fx-padding: 10 15 10 15; -fx-border-color: #eeeeee; -fx-border-width: 0 0 1 0;">
                 <!-- Left Controls -->
-                <HBox spacing="15.0" HBox.hgrow="ALWAYS">
-                    <Button fx:id="toggleFilesBtn" text="☰ Files" minWidth="70" minHeight="30"
-                            style="-fx-padding: 6 12 6 12; -fx-font-size: 10; -fx-font-weight: bold; -fx-background-color: #333333; -fx-text-fill: white; -fx-border-radius: 0;"
-                            onAction="#onToggleSidebar"/>
-                    <Label fx:id="fileInfoLabel" text="Ready" style="-fx-font-size: 10; -fx-text-fill: #666666;"/>
-                </HBox>
+                <Label fx:id="fileInfoLabel" text="Ready" style="-fx-font-size: 10; -fx-text-fill: #666666;"/>
 
                 <!-- Right Controls -->
                 <Region HBox.hgrow="ALWAYS"/>
