@@ -44,8 +44,6 @@ public class ApplicationController {
     @FXML
     private Button refreshBtn;
     @FXML
-    private ListView<String> openFilesListBox;
-    @FXML
     private TextField searchField;
     @FXML
     private TextArea logTextArea;
@@ -82,11 +80,6 @@ public class ApplicationController {
         fileContentCache = new HashMap<>();
         fileThreadRefs = new HashMap<>();
 
-        // Setup open files list with custom cell factory (includes close buttons)
-        openFilesListBox.setItems(openFiles);
-        openFilesListBox.setCellFactory(param -> new OpenFileCell());
-        openFilesListBox.setOnMouseClicked(event -> onOpenFileSelected());
-
         // Setup listener for openFiles to update tab bar
         openFiles.addListener((javafx.collections.ListChangeListener<String>) change -> {
             updateTabBar();
@@ -96,67 +89,6 @@ public class ApplicationController {
         searchField.setOnKeyReleased(event -> filterContent());
 
         setupUI();
-    }
-
-    // Custom ListCell for open files with close button
-    private class OpenFileCell extends ListCell<String> {
-        private HBox hbox;
-        private Label fileNameLabel;
-        private Button closeBtn;
-
-        public OpenFileCell() {
-            hbox = new HBox(8);
-            hbox.setStyle("-fx-padding: 4;");
-
-            fileNameLabel = new Label();
-            fileNameLabel.setStyle("-fx-font-size: 9;");
-            HBox.setHgrow(fileNameLabel, Priority.ALWAYS);
-
-            closeBtn = new Button("✕");
-            closeBtn.setStyle(
-                "-fx-padding: 2 6 2 6; " +
-                "-fx-font-size: 8; " +
-                "-fx-background-color: #ff6b6b; " +
-                "-fx-text-fill: white; " +
-                "-fx-border-radius: 0; " +
-                "-fx-min-width: 20; " +
-                "-fx-min-height: 20;"
-            );
-
-            closeBtn.setOnAction(event -> {
-                String filePath = getItem();
-                if (filePath != null) {
-                    closeFile(filePath);
-                }
-            });
-
-            hbox.getChildren().addAll(fileNameLabel, closeBtn);
-            setGraphic(hbox);
-        }
-
-        @Override
-        protected void updateItem(String item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setGraphic(null);
-                setText(null);
-                setStyle("");  // Clear all styling for empty cells
-                setPrefHeight(0);  // Don't render empty cells
-            } else {
-                String displayName = new File(item).getName();
-                fileNameLabel.setText(displayName);
-                setGraphic(hbox);
-                setText(null);
-                setPrefHeight(USE_COMPUTED_SIZE);  // Use normal height for items
-
-                // Highlight current file
-                if (item.equals(currentFilePath)) {
-                    setStyle("-fx-background-color: #e3f2fd; -fx-border-color: #2196F3; -fx-border-width: 1;");
-                } else {
-                    setStyle("-fx-background-color: #ffffff;");
-                }
-            }
-        }
     }
 
     private void setupUI() {
@@ -175,7 +107,6 @@ public class ApplicationController {
         }
 
         loadCurrentFile();
-        updateOpenFilesList();
     }
 
     public void setCurrentFolder(String folderPath) {
@@ -188,7 +119,6 @@ public class ApplicationController {
                 openFiles.add(currentFilePath);
             }
             loadCurrentFile();
-            updateOpenFilesList();
         }
     }
 
@@ -376,8 +306,7 @@ public class ApplicationController {
         // Store index before removal
         int removedIndex = openFiles.indexOf(filePath);
 
-        // Remove from open files list - clear selection first to avoid issues
-        openFilesListBox.getSelectionModel().clearSelection();
+        // Remove from open files list
         openFiles.remove(filePath);
 
         // If closing current file, switch to another
@@ -387,7 +316,6 @@ public class ApplicationController {
                 int newIndex = Math.min(removedIndex, openFiles.size() - 1);
                 currentFilePath = openFiles.get(newIndex);
                 loadCurrentFile();
-                openFilesListBox.getSelectionModel().select(newIndex);
             } else {
                 currentFilePath = null;
                 logTextArea.clear();
@@ -395,32 +323,8 @@ public class ApplicationController {
                 statusLabel.setText("No files open");
             }
         }
-
-        // Force rebuild the ListView on UI thread
-        Platform.runLater(() -> {
-            openFilesListBox.refresh();
-        });
     }
 
-    private void onOpenFileSelected() {
-        int selectedIndex = openFilesListBox.getSelectionModel().getSelectedIndex();
-        if (selectedIndex >= 0 && selectedIndex < openFiles.size()) {
-            currentFilePath = openFiles.get(selectedIndex);
-            tailThreadRef.setActive(false);
-            pauseMode = false;
-            pauseBtn.setText("⏸ Pause");
-            pauseBtn.setStyle("-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #FF9800; -fx-text-fill: white; -fx-border-radius: 0;");
-            loadCurrentFile();
-            updateOpenFilesList();
-        }
-    }
-
-    private void updateOpenFilesList() {
-        // Refresh the ListView to update display
-        Platform.runLater(() -> {
-            openFilesListBox.refresh();
-        });
-    }
 
     // Update tab bar with open files as tabs
     private void updateTabBar() {
@@ -467,14 +371,14 @@ public class ApplicationController {
 
         // On tab click, switch to this file
         tab.setOnMouseClicked(event -> {
-            if (event.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+            if (event.getButton() == javafx.scene.input.MouseButton.PRIMARY && !event.getTarget().equals(closeTab)) {
                 currentFilePath = filePath;
                 tailThreadRef.setActive(false);
                 pauseMode = false;
                 pauseBtn.setText("⏸ Pause");
                 pauseBtn.setStyle("-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #FF9800; -fx-text-fill: white; -fx-border-radius: 0;");
                 loadCurrentFile();
-                updateOpenFilesList();
+                updateTabBar();
             }
         });
 

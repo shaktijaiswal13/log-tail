@@ -56,39 +56,23 @@
 
     <!-- CENTER: Main Content Area -->
     <center>
-        <HBox spacing="0" style="-fx-background-color: #ffffff;">
-            <!-- LEFT SIDEBAR -->
-            <VBox minWidth="250" prefWidth="250" style="-fx-background-color: #f5f5f5; -fx-border-color: #eeeeee; -fx-border-width: 0 1 0 0;">
-                <padding>
-                    <Insets top="12" right="8" bottom="12" left="12"/>
-                </padding>
+        <VBox spacing="0" style="-fx-background-color: #ffffff;">
+            <!-- Search Bar -->
+            <HBox spacing="8.0" style="-fx-background-color: #ffffff; -fx-padding: 10 12 10 12; -fx-border-color: #eeeeee; -fx-border-width: 0 0 1 0;">
+                <Label text="🔍" style="-fx-font-size: 11; -fx-text-fill: #666666;"/>
+                <TextField fx:id="searchField" HBox.hgrow="ALWAYS"
+                           style="-fx-font-size: 10; -fx-padding: 5; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-background-color: #f5f5f5;"
+                           promptText="Search log content..."/>
+            </HBox>
 
-                <!-- Open Files Section (Only Section) -->
-                <Label text="📂 Open Files" style="-fx-font-size: 11; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
-                <ListView fx:id="openFilesListBox" VBox.vgrow="ALWAYS"
-                          style="-fx-background-color: #ffffff; -fx-control-inner-background: #ffffff; -fx-text-fill: #333333; -fx-font-size: 9; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-padding: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;">
-                </ListView>
-            </VBox>
+            <!-- Text Display Area -->
+            <TextArea fx:id="logTextArea" VBox.vgrow="ALWAYS"
+                      style="-fx-control-inner-background: #ffffff; -fx-text-fill: #333333; -fx-font-family: 'Courier New'; -fx-font-size: 10; -fx-padding: 12; -fx-border-color: transparent;">
+                <wrapText>false</wrapText>
+            </TextArea>
 
-            <!-- RIGHT CONTENT AREA -->
-            <VBox HBox.hgrow="ALWAYS" spacing="0" style="-fx-background-color: #ffffff;">
-                <!-- Search Bar -->
-                <HBox spacing="8.0" style="-fx-background-color: #ffffff; -fx-padding: 10 12 10 12; -fx-border-color: #eeeeee; -fx-border-width: 0 0 1 0;">
-                    <Label text="🔍" style="-fx-font-size: 11; -fx-text-fill: #666666;"/>
-                    <TextField fx:id="searchField" HBox.hgrow="ALWAYS"
-                               style="-fx-font-size: 10; -fx-padding: 5; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-background-color: #f5f5f5;"
-                               promptText="Search log content..."/>
-                </HBox>
-
-                <!-- Text Display Area -->
-                <TextArea fx:id="logTextArea" VBox.vgrow="ALWAYS"
-                          style="-fx-control-inner-background: #ffffff; -fx-text-fill: #333333; -fx-font-family: 'Courier New'; -fx-font-size: 10; -fx-padding: 12; -fx-border-color: transparent;">
-                    <wrapText>false</wrapText>
-                </TextArea>
-
-                <!-- Status Bar -->
-                <Label fx:id="statusLabel" text="Ready" style="-fx-font-size: 8; -fx-text-fill: #666666; -fx-padding: 4 12 4 12; -fx-background-color: #f0f0f0; -fx-border-color: #eeeeee; -fx-border-width: 1 0 0 0;"/>
-            </VBox>
-        </HBox>
+            <!-- Status Bar -->
+            <Label fx:id="statusLabel" text="Ready" style="-fx-font-size: 8; -fx-text-fill: #666666; -fx-padding: 4 12 4 12; -fx-background-color: #f0f0f0; -fx-border-color: #eeeeee; -fx-border-width: 1 0 0 0;"/>
+        </VBox>
     </center>
 </BorderPane>
