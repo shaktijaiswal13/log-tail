@@ -213,6 +213,23 @@ public class ApplicationController {
     private int currentMatchIndex = 0;
     private java.util.List<Integer> matchPositions = new java.util.ArrayList<>();
 
+    private void goToNextMatch() {
+        if (matchPositions.isEmpty()) {
+            return;
+        }
+
+        // Move to next match (cycle back to first if at the end)
+        currentMatchIndex = (currentMatchIndex + 1) % matchPositions.size();
+        int matchPos = matchPositions.get(currentMatchIndex);
+        String searchTerm = searchField.getText().trim();
+
+        // Move caret and select the match
+        logTextArea.positionCaret(matchPos);
+        logTextArea.selectRange(matchPos, matchPos + searchTerm.length());
+
+        statusLabel.setText("Match " + (currentMatchIndex + 1) + " of " + matchPositions.size());
+    }
+
     private void filterContent() {
         String searchTerm = searchField.getText().trim().toLowerCase();
 
