@@ -1,6 +1,7 @@
 module org.taillogs.taillogs {
     requires javafx.controls;
     requires javafx.fxml;
+    requires org.fxmisc.richtext;
 
     opens org.taillogs.taillogs to javafx.fxml;
     opens org.taillogs.taillogs.screens to javafx.fxml;

@@ -6,8 +6,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import org.fxmisc.richtext.InlineCssTextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -44,7 +44,7 @@ public class ApplicationController {
     @FXML
     private TextField searchField;
     @FXML
-    private TextArea logTextArea;
+    private InlineCssTextArea logTextArea;
     @FXML
     private Label statusLabel;
     @FXML
@@ -99,6 +99,43 @@ public class ApplicationController {
     private void setupUI() {
         logTextArea.setWrapText(false);
         logTextArea.setEditable(false);
+        
+        // Setup hover effects for buttons
+        setupButtonHoverEffects();
+    }
+    
+    private void setupButtonHoverEffects() {
+        // Tail button hover effect
+        pauseBtn.setOnMouseEntered(e -> {
+            if (!pauseMode) {
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #d0d0d0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            } else {
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            }
+        });
+        pauseBtn.setOnMouseExited(e -> {
+            if (!pauseMode) {
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            } else {
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            }
+        });
+        
+        // Clear button hover effect
+        clearBtn.setOnMouseEntered(e -> {
+            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+        });
+        clearBtn.setOnMouseExited(e -> {
+            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+        });
+        
+        // Refresh button hover effect
+        refreshBtn.setOnMouseEntered(e -> {
+            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+        });
+        refreshBtn.setOnMouseExited(e -> {
+            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+        });
     }
 
     public void setCurrentFile(String filePath) {
@@ -212,6 +249,7 @@ public class ApplicationController {
 
     private int currentMatchIndex = 0;
     private java.util.List<Integer> matchPositions = new java.util.ArrayList<>();
+    private java.util.List<javafx.scene.text.Text> highlightedRanges = new java.util.ArrayList<>();
 
     private void goToNextMatch() {
         if (matchPositions.isEmpty()) {
@@ -221,22 +259,21 @@ public class ApplicationController {
         // Move to next match (cycle back to first if at the end)
         currentMatchIndex = (currentMatchIndex + 1) % matchPositions.size();
         int matchPos = matchPositions.get(currentMatchIndex);
-        String searchTerm = searchField.getText().trim();
 
-        // Move caret and select the match
-        logTextArea.positionCaret(matchPos);
-        logTextArea.selectRange(matchPos, matchPos + searchTerm.length());
+        // Move caret to match and scroll to it
+        logTextArea.moveTo(matchPos);
+        logTextArea.requestFollowCaret();
+        logTextArea.deselect();
 
         statusLabel.setText("Match " + (currentMatchIndex + 1) + " of " + matchPositions.size());
     }
 
     private void filterContent() {
-        String searchTerm = searchField.getText().trim().toLowerCase();
+        String searchTerm = searchField.getText().trim();
 
         if (searchTerm.isEmpty()) {
-            // Restore original content if search is cleared
-            logTextArea.clear();
-            logTextArea.appendText(originalLogContent);
+            // Remove all highlighting when search is cleared
+            clearHighlights();
             logTextArea.deselect();
             statusLabel.setText("Ready");
             matchPositions.clear();
@@ -244,30 +281,55 @@ public class ApplicationController {
             return;
         }
 
-        // Display original content
-        logTextArea.clear();
-        logTextArea.appendText(originalLogContent);
+        // Get current content (don't clear it)
+        String content = logTextArea.getText();
+        if (content.isEmpty()) {
+            return;
+        }
 
         // Find all occurrences (case-insensitive search)
-        String content = originalLogContent.toLowerCase();
+        String contentLower = content.toLowerCase();
+        String searchTermLower = searchTerm.toLowerCase();
         matchPositions.clear();
         currentMatchIndex = 0;
         int startIndex = 0;
 
-        while ((startIndex = content.indexOf(searchTerm, startIndex)) != -1) {
+        while ((startIndex = contentLower.indexOf(searchTermLower, startIndex)) != -1) {
             matchPositions.add(startIndex);
             startIndex += searchTerm.length();
         }
 
-        // Highlight and scroll to first match if found
+        // Apply yellow highlighting to all matches
+        // Get current content length for validation
+        int contentLength = logTextArea.getLength();
+        if (contentLength == 0) {
+            statusLabel.setText("No content to search");
+            return;
+        }
+        
+        // Clear any existing styles first
+        logTextArea.clearStyle(0, contentLength);
+        
+        // Apply yellow highlighting to all matches
         if (!matchPositions.isEmpty()) {
+            // Apply styles using InlineCssTextArea's setStyle method
+            // The CSS property for background in RichTextFX is -rtfx-background-color
+            for (int matchPos : matchPositions) {
+                int endPos = matchPos + searchTerm.length();
+                if (matchPos >= 0 && endPos <= contentLength) {
+                    // Use RichTextFX specific CSS property for background color
+                    // Format: -rtfx-background-color: color;
+                    logTextArea.setStyle(matchPos, endPos, "-rtfx-background-color: yellow;");
+                }
+            }
+
+            // Scroll to first match
             int firstMatchPos = matchPositions.get(0);
-
-            // Move caret to first match (this scrolls the view)
-            logTextArea.positionCaret(firstMatchPos);
-
-            // Select the first match (highlights it in blue)
-            logTextArea.selectRange(firstMatchPos, firstMatchPos + searchTerm.length());
+            if (firstMatchPos >= 0 && firstMatchPos < contentLength) {
+                logTextArea.moveTo(firstMatchPos);
+                logTextArea.requestFollowCaret();
+                logTextArea.deselect();
+            }
 
             // Update status
             statusLabel.setText("Found " + matchPositions.size() + " match" + (matchPositions.size() == 1 ? "" : "es"));
@@ -276,6 +338,17 @@ public class ApplicationController {
             logTextArea.deselect();
             statusLabel.setText("No matches found");
         }
+    }
+
+    private void clearHighlights() {
+        // Clear all inline styles by resetting the entire text area style
+        Platform.runLater(() -> {
+            String content = logTextArea.getText();
+            if (!content.isEmpty()) {
+                // Remove all inline styles by clearing style for the entire range
+                logTextArea.clearStyle(0, content.length());
+            }
+        });
     }
 
     // Setter for onBack callback

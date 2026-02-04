@@ -1,8 +1,8 @@
 package org.taillogs.taillogs.utils;
 
 import javafx.application.Platform;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.Alert;
+import org.fxmisc.richtext.InlineCssTextArea;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class FileOperations {
 
-    public static long loadFileContent(TextArea textArea, String filePath) {
+    public static long loadFileContent(InlineCssTextArea textArea, String filePath) {
         try {
             File file = new File(filePath);
             if (!file.exists()) {
@@ -39,7 +39,9 @@ public class FileOperations {
             Platform.runLater(() -> {
                 textArea.clear();
                 textArea.appendText(content.toString());
-                textArea.setScrollTop(Double.MAX_VALUE);
+                // Scroll to end
+                textArea.moveTo(textArea.getLength());
+                textArea.requestFollowCaret();
             });
 
             return file.length();
@@ -49,7 +51,7 @@ public class FileOperations {
         }
     }
 
-    public static void startTailing(String filePath, TextArea textArea, TailThreadRef threadRef) {
+    public static void startTailing(String filePath, InlineCssTextArea textArea, TailThreadRef threadRef) {
         if (!threadRef.isActive()) {
             threadRef.setActive(true);
             Thread tailThread = new Thread(() -> tailFile(filePath, textArea, threadRef), "TailThread");
@@ -58,7 +60,7 @@ public class FileOperations {
         }
     }
 
-    private static void tailFile(String filePath, TextArea textArea, TailThreadRef threadRef) {
+    private static void tailFile(String filePath, InlineCssTextArea textArea, TailThreadRef threadRef) {
         try {
             File file = new File(filePath);
             long filePosition = file.length();
@@ -81,7 +83,9 @@ public class FileOperations {
                                 String content = newContent.toString();
                                 Platform.runLater(() -> {
                                     textArea.appendText(content);
-                                    textArea.setScrollTop(Double.MAX_VALUE);
+                                    // Scroll to end
+                                    textArea.moveTo(textArea.getLength());
+                                    textArea.requestFollowCaret();
                                 });
                                 filePosition = currentSize;
                             }
@@ -98,7 +102,7 @@ public class FileOperations {
         }
     }
 
-    public static void refreshFile(TextArea textArea, String filePath) {
+    public static void refreshFile(InlineCssTextArea textArea, String filePath) {
         try {
             File file = new File(filePath);
             if (!file.exists()) {
@@ -119,7 +123,9 @@ public class FileOperations {
             Platform.runLater(() -> {
                 textArea.clear();
                 textArea.appendText(content.toString());
-                textArea.setScrollTop(Double.MAX_VALUE);
+                // Scroll to end
+                textArea.moveTo(textArea.getLength());
+                textArea.requestFollowCaret();
             });
         } catch (Exception e) {
             showError("Error", "Failed to refresh file: " + e.getMessage());
