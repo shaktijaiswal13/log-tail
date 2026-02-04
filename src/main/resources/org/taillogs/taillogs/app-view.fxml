@@ -32,8 +32,8 @@
                 <!-- Right Controls -->
                 <Region HBox.hgrow="ALWAYS"/>
                 <HBox spacing="4.0">
-                    <Button fx:id="pauseBtn" text="⏸ Pause" minWidth="70" minHeight="22"
-                            style="-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;"
+                    <Button fx:id="pauseBtn" text="Tail" minWidth="50" minHeight="22"
+                            style="-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;"
                             onAction="#onTogglePause"/>
                     <Button fx:id="clearBtn" text="✕ Clear" minWidth="60" minHeight="22"
                             style="-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;"

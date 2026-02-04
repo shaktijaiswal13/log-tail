@@ -173,19 +173,17 @@ public class ApplicationController {
             if (fileThreadRefs.containsKey(currentFilePath)) {
                 fileThreadRefs.get(currentFilePath).setActive(false);
             }
-            pauseBtn.setText("▶ Resume");
             pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
             statusLabel.setText("Paused");
         } else {
-            pauseBtn.setText("⏸ Pause");
-            pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
             if (currentFilePath != null) {
                 // Create new thread ref if needed
                 if (!fileThreadRefs.containsKey(currentFilePath)) {
                     fileThreadRefs.put(currentFilePath, new TailThreadRef());
                 }
                 FileOperations.startTailing(currentFilePath, logTextArea, fileThreadRefs.get(currentFilePath));
-                statusLabel.setText("Resuming...");
+                statusLabel.setText("Tailing...");
             }
         }
     }
@@ -369,8 +367,7 @@ public class ApplicationController {
                 currentFilePath = filePath;
                 tailThreadRef.setActive(false);
                 pauseMode = false;
-                pauseBtn.setText("⏸ Pause");
-                pauseBtn.setStyle("-fx-padding: 5 10 5 10; -fx-font-size: 9; -fx-font-weight: bold; -fx-background-color: #FF9800; -fx-text-fill: white; -fx-border-radius: 0;");
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
                 loadCurrentFile();
                 updateTabBar();
             }
