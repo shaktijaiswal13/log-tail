@@ -131,11 +131,14 @@ public class ApplicationController {
             if (empty || item == null) {
                 setGraphic(null);
                 setText(null);
+                setStyle("");  // Clear all styling for empty cells
+                setPrefHeight(0);  // Don't render empty cells
             } else {
                 String displayName = new File(item).getName();
                 fileNameLabel.setText(displayName);
                 setGraphic(hbox);
                 setText(null);
+                setPrefHeight(USE_COMPUTED_SIZE);  // Use normal height for items
 
                 // Highlight current file
                 if (item.equals(currentFilePath)) {
@@ -345,14 +348,21 @@ public class ApplicationController {
         // Remove from cache
         fileContentCache.remove(filePath);
 
-        // Remove from open files list
+        // Store index before removal
+        int removedIndex = openFiles.indexOf(filePath);
+
+        // Remove from open files list - clear selection first to avoid issues
+        openFilesListBox.getSelectionModel().clearSelection();
         openFiles.remove(filePath);
 
         // If closing current file, switch to another
         if (filePath.equals(currentFilePath)) {
             if (!openFiles.isEmpty()) {
-                currentFilePath = openFiles.get(0);
+                // Select the file that was after the removed one, or the last one
+                int newIndex = Math.min(removedIndex, openFiles.size() - 1);
+                currentFilePath = openFiles.get(newIndex);
                 loadCurrentFile();
+                openFilesListBox.getSelectionModel().select(newIndex);
             } else {
                 currentFilePath = null;
                 logTextArea.clear();
@@ -361,7 +371,10 @@ public class ApplicationController {
             }
         }
 
-        updateOpenFilesList();
+        // Force rebuild the ListView on UI thread
+        Platform.runLater(() -> {
+            openFilesListBox.refresh();
+        });
     }
 
     private void onOpenFileSelected() {
@@ -378,6 +391,9 @@ public class ApplicationController {
     }
 
     private void updateOpenFilesList() {
-        openFilesListBox.refresh();
+        // Refresh the ListView to update display
+        Platform.runLater(() -> {
+            openFilesListBox.refresh();
+        });
     }
 }
