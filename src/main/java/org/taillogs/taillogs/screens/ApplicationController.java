@@ -84,7 +84,14 @@ public class ApplicationController {
         });
 
         // Setup search field listener
-        searchField.setOnKeyReleased(event -> filterContent());
+        searchField.setOnKeyReleased(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                // Go to next match on Enter
+                goToNextMatch();
+            } else {
+                filterContent();
+            }
+        });
 
         setupUI();
     }
@@ -203,43 +210,54 @@ public class ApplicationController {
         }
     }
 
+    private int currentMatchIndex = 0;
+    private java.util.List<Integer> matchPositions = new java.util.ArrayList<>();
+
     private void filterContent() {
-        String searchTerm = searchField.getText().trim();
+        String searchTerm = searchField.getText().trim().toLowerCase();
 
         if (searchTerm.isEmpty()) {
             // Restore original content if search is cleared
             logTextArea.clear();
             logTextArea.appendText(originalLogContent);
+            logTextArea.deselect();
+            statusLabel.setText("Ready");
+            matchPositions.clear();
+            currentMatchIndex = 0;
             return;
         }
 
-        // Display original content with highlighting
+        // Display original content
         logTextArea.clear();
         logTextArea.appendText(originalLogContent);
 
-        // Find and highlight all occurrences
-        String content = logTextArea.getText();
+        // Find all occurrences (case-insensitive search)
+        String content = originalLogContent.toLowerCase();
+        matchPositions.clear();
+        currentMatchIndex = 0;
         int startIndex = 0;
-        boolean foundAny = false;
 
         while ((startIndex = content.indexOf(searchTerm, startIndex)) != -1) {
-            foundAny = true;
-            logTextArea.selectRange(startIndex, startIndex + searchTerm.length());
+            matchPositions.add(startIndex);
             startIndex += searchTerm.length();
         }
 
-        // If found, scroll to first match and select it
-        if (foundAny) {
-            startIndex = content.indexOf(searchTerm);
-            logTextArea.selectRange(startIndex, startIndex + searchTerm.length());
-            logTextArea.setStyle("-fx-control-inner-background: #fffacd; -fx-text-fill: #333333; -fx-font-family: 'Courier New'; -fx-font-size: 10; -fx-padding: 12; -fx-border-color: transparent;");
+        // Highlight and scroll to first match if found
+        if (!matchPositions.isEmpty()) {
+            int firstMatchPos = matchPositions.get(0);
 
-            // Scroll to first match
-            int line = content.substring(0, startIndex).split("\n", -1).length - 1;
-            logTextArea.positionCaret(startIndex);
+            // Move caret to first match (this scrolls the view)
+            logTextArea.positionCaret(firstMatchPos);
+
+            // Select the first match (highlights it in blue)
+            logTextArea.selectRange(firstMatchPos, firstMatchPos + searchTerm.length());
+
+            // Update status
+            statusLabel.setText("Found " + matchPositions.size() + " match" + (matchPositions.size() == 1 ? "" : "es"));
         } else {
-            // Reset styling if nothing found
-            logTextArea.setStyle("-fx-control-inner-background: #ffffff; -fx-text-fill: #333333; -fx-font-family: 'Courier New'; -fx-font-size: 10; -fx-padding: 12; -fx-border-color: transparent;");
+            // No matches found
+            logTextArea.deselect();
+            statusLabel.setText("No matches found");
         }
     }
 
