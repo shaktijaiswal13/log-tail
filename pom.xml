@@ -128,7 +128,7 @@
                                     <mainClass>org.taillogs.taillogs.Launcher</mainClass>
                                 </transformer>
                             </transformers>
-                            <finalName>taillogs</finalName>
+                            <finalName>log-tail</finalName>
                         </configuration>
                     </execution>
                 </executions>
