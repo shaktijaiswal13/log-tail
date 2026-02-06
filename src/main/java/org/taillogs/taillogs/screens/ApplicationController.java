@@ -26,12 +26,16 @@ import org.taillogs.taillogs.utils.FontStylesUtil;
 import org.taillogs.taillogs.utils.SyntaxHighlighter;
 import org.taillogs.taillogs.config.AppearanceSettings;
 import org.taillogs.taillogs.config.PreferencesManager;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -296,8 +300,9 @@ public class ApplicationController {
     }
 
     private int currentMatchIndex = 0;
-    private java.util.List<Integer> matchPositions = new java.util.ArrayList<>();
-    private java.util.List<javafx.scene.text.Text> highlightedRanges = new java.util.ArrayList<>();
+    private List<Integer> matchPositions = new ArrayList<>();
+    private String currentSearchTerm = "";
+    private boolean wasAutoTailingBeforeSearch = false;
 
     private void goToNextMatch() {
         if (matchPositions.isEmpty()) {
@@ -308,12 +313,46 @@ public class ApplicationController {
         currentMatchIndex = (currentMatchIndex + 1) % matchPositions.size();
         int matchPos = matchPositions.get(currentMatchIndex);
 
+        // Pause tailing if it was active
+        if (currentFilePath != null && fileThreadRefs.containsKey(currentFilePath)) {
+            wasAutoTailingBeforeSearch = !pauseMode;
+            if (wasAutoTailingBeforeSearch) {
+                fileThreadRefs.get(currentFilePath).setActive(false);
+                pauseMode = true;
+                pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, true));
+                statusLabel.setText("Paused for search...");
+            }
+        }
+
         // Move caret to match and scroll to it
         logArea.moveTo(matchPos);
         logArea.requestFollowCaret();
-        logArea.deselect();
+
+        // Reapply highlighting to show current match
+        applySearchHighlighting();
 
         statusLabel.setText("Match " + (currentMatchIndex + 1) + " of " + matchPositions.size());
+
+        // Resume tailing after 3 seconds
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+                Platform.runLater(() -> {
+                    if (wasAutoTailingBeforeSearch && currentFilePath != null && !pauseMode) {
+                        // Only resume if user hasn't manually changed state
+                        if (fileThreadRefs.containsKey(currentFilePath)) {
+                            fileThreadRefs.get(currentFilePath).setActive(true);
+                            FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath));
+                            pauseMode = false;
+                            pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
+                            statusLabel.setText("Tailing...");
+                        }
+                    }
+                });
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
     }
 
     private void filterContent() {
@@ -321,8 +360,8 @@ public class ApplicationController {
 
         if (searchTerm.isEmpty()) {
             // Remove all highlighting when search is cleared
-            clearHighlights();
-            logArea.deselect();
+            clearSearchHighlights();
+            currentSearchTerm = "";
             statusLabel.setText("Ready");
             matchPositions.clear();
             currentMatchIndex = 0;
@@ -347,25 +386,94 @@ public class ApplicationController {
             startIndex += searchTerm.length();
         }
 
+        currentSearchTerm = searchTerm;
+
         if (!matchPositions.isEmpty()) {
-            // Scroll to and select first match
+            // Pause tailing if it was active
+            if (currentFilePath != null && fileThreadRefs.containsKey(currentFilePath)) {
+                wasAutoTailingBeforeSearch = !pauseMode;
+                if (wasAutoTailingBeforeSearch) {
+                    fileThreadRefs.get(currentFilePath).setActive(false);
+                    pauseMode = true;
+                    pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, true));
+                }
+            }
+
+            // Apply highlighting to all matches
+            applySearchHighlighting();
+
+            // Scroll to first match
             int firstMatchPos = matchPositions.get(0);
             logArea.moveTo(firstMatchPos);
             logArea.requestFollowCaret();
-            logArea.selectRange(firstMatchPos, firstMatchPos + searchTerm.length());
 
             // Update status
             statusLabel.setText("Found " + matchPositions.size() + " match" + (matchPositions.size() == 1 ? "" : "es"));
+
+            // Resume tailing after 3 seconds
+            new Thread(() -> {
+                try {
+                    Thread.sleep(3000);
+                    Platform.runLater(() -> {
+                        if (wasAutoTailingBeforeSearch && currentFilePath != null && !pauseMode) {
+                            // Only resume if user hasn't manually changed state
+                            if (fileThreadRefs.containsKey(currentFilePath)) {
+                                fileThreadRefs.get(currentFilePath).setActive(true);
+                                FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath));
+                                pauseMode = false;
+                                pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
+                                statusLabel.setText("Tailing...");
+                            }
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
         } else {
             // No matches found
-            logArea.deselect();
+            clearSearchHighlights();
             statusLabel.setText("No matches found");
         }
     }
 
-    private void clearHighlights() {
-        // Clear selection highlighting
-        logArea.deselect();
+    private void applySearchHighlighting() {
+        if (currentSearchTerm.isEmpty() || matchPositions.isEmpty()) {
+            return;
+        }
+
+        String content = logArea.getText();
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+        int lastEnd = 0;
+
+        // Sort match positions for easier iteration
+        for (int pos : matchPositions) {
+            // Add unstyled content before this match
+            if (pos > lastEnd) {
+                spansBuilder.add(Collections.emptyList(), pos - lastEnd);
+            }
+
+            // Determine if this is the current match
+            String styleClass = (matchPositions.indexOf(pos) == currentMatchIndex) ? "search-current" : "search-result";
+            spansBuilder.add(Collections.singleton(styleClass), currentSearchTerm.length());
+            lastEnd = pos + currentSearchTerm.length();
+        }
+
+        // Add remaining content
+        if (lastEnd < content.length()) {
+            spansBuilder.add(Collections.emptyList(), content.length() - lastEnd);
+        }
+
+        StyleSpans<Collection<String>> spans = spansBuilder.create();
+        logArea.setStyleSpans(0, spans);
+    }
+
+    private void clearSearchHighlights() {
+        if (logArea.getText().isEmpty()) {
+            return;
+        }
+        // Reapply syntax highlighting without search highlighting
+        SyntaxHighlighter.applyLogLevelHighlighting(logArea);
     }
 
     // Setter for onBack callback
