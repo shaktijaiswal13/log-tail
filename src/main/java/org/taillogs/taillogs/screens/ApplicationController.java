@@ -199,7 +199,9 @@ public class ApplicationController {
             fileThreadRefs.put(currentFilePath, fileThreadRef);
 
             logTextArea.clear();
-            FileOperations.loadFileContent(logTextArea, currentFilePath);
+            long fileSize = FileOperations.loadFileContent(logTextArea, currentFilePath);
+            // Initialize file position to current file size so tailing starts from here
+            fileThreadRef.setFilePosition(fileSize);
             fileInfoLabel.setText("📄 " + new File(currentFilePath).getName());
 
             // Start tailing with the file-specific thread ref

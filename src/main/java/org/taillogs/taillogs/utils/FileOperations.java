@@ -63,11 +63,15 @@ public class FileOperations {
     private static void tailFile(String filePath, InlineCssTextArea textArea, TailThreadRef threadRef) {
         try {
             File file = new File(filePath);
-            long filePosition = file.length();
+            // Initialize filePosition if this is the first time tailing
+            if (threadRef.getFilePosition() == 0) {
+                threadRef.setFilePosition(file.length());
+            }
 
             while (threadRef.isActive()) {
                 try {
                     long currentSize = file.length();
+                    long filePosition = threadRef.getFilePosition();
                     if (currentSize > filePosition) {
                         try (InputStreamReader reader = new InputStreamReader(
                                 new FileInputStream(file), StandardCharsets.UTF_8)) {
@@ -87,7 +91,7 @@ public class FileOperations {
                                     textArea.moveTo(textArea.getLength());
                                     textArea.requestFollowCaret();
                                 });
-                                filePosition = currentSize;
+                                threadRef.setFilePosition(currentSize);
                             }
                         }
                     }
@@ -187,6 +191,7 @@ public class FileOperations {
 
     public static class TailThreadRef {
         private boolean active = false;
+        private long filePosition = 0;
 
         public synchronized boolean isActive() {
             return active;
@@ -194,6 +199,14 @@ public class FileOperations {
 
         public synchronized void setActive(boolean active) {
             this.active = active;
+        }
+
+        public synchronized long getFilePosition() {
+            return filePosition;
+        }
+
+        public synchronized void setFilePosition(long position) {
+            this.filePosition = position;
         }
     }
 }
