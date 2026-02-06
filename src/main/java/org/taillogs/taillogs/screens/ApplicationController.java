@@ -22,6 +22,9 @@ import javafx.collections.ObservableList;
 
 import org.taillogs.taillogs.utils.FileOperations;
 import org.taillogs.taillogs.utils.FileOperations.TailThreadRef;
+import org.taillogs.taillogs.utils.FontStylesUtil;
+import org.taillogs.taillogs.config.AppearanceSettings;
+import org.taillogs.taillogs.config.PreferencesManager;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -67,11 +70,15 @@ public class ApplicationController {
     private Map<String, TailThreadRef> fileThreadRefs; // Track tailing threads for each file
 
     private Runnable onBack;
+    private AppearanceSettings appearanceSettings;
 
     public void initialize() {
         tailThreadRef = new TailThreadRef();
         fileList = java.util.Collections.emptyList();
         fileListFullPath = java.util.Collections.emptyList();
+
+        // Load appearance settings
+        appearanceSettings = PreferencesManager.loadAppearanceSettings();
 
         // Initialize multiple files support
         openFiles = FXCollections.observableArrayList();
@@ -94,47 +101,85 @@ public class ApplicationController {
         });
 
         setupUI();
+        applyAppearanceSettings(appearanceSettings);
+    }
+
+    public void applyAppearanceSettings(AppearanceSettings settings) {
+        this.appearanceSettings = settings;
+
+        // Apply to log text area
+        logTextArea.setStyle(FontStylesUtil.getLogTextAreaStyle(settings));
+
+        // Apply to search field
+        searchField.setStyle(FontStylesUtil.getSearchFieldStyle(settings));
+
+        // Apply to status label
+        statusLabel.setStyle(FontStylesUtil.getStatusLabelStyle(settings));
+
+        // Apply to file info label
+        fileInfoLabel.setStyle(FontStylesUtil.getLabelStyle(settings, 8));
+
+        // Update button styles
+        updateButtonStyles();
+
+        // Update tab bar if needed
+        updateTabBar();
+    }
+
+    private void updateButtonStyles() {
+        pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, pauseMode));
+        clearBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
+        refreshBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
     }
 
     private void setupUI() {
         logTextArea.setWrapText(false);
         logTextArea.setEditable(false);
-        
+
+        // Configure scrollbars to always be visible
+        String scrollbarCSS = "-fx-control-inner-background: #ffffff; " +
+                             "-fx-padding: 0; " +
+                             "-fx-text-fill: #333333;";
+        logTextArea.setStyle(logTextArea.getStyle() + " " + scrollbarCSS);
+
         // Setup hover effects for buttons
         setupButtonHoverEffects();
     }
     
     private void setupButtonHoverEffects() {
+        int buttonFontSize = appearanceSettings.getFontSize() - 4;
+        String fontWeightStyle = appearanceSettings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
+
         // Tail button hover effect
         pauseBtn.setOnMouseEntered(e -> {
             if (!pauseMode) {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #d0d0d0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #d0d0d0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
             } else {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
             }
         });
         pauseBtn.setOnMouseExited(e -> {
             if (!pauseMode) {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
             } else {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
             }
         });
-        
+
         // Clear button hover effect
         clearBtn.setOnMouseEntered(e -> {
-            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
         });
         clearBtn.setOnMouseExited(e -> {
-            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
         });
-        
+
         // Refresh button hover effect
         refreshBtn.setOnMouseEntered(e -> {
-            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
         });
         refreshBtn.setOnMouseExited(e -> {
-            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
         });
     }
 
@@ -219,10 +264,10 @@ public class ApplicationController {
             if (fileThreadRefs.containsKey(currentFilePath)) {
                 fileThreadRefs.get(currentFilePath).setActive(false);
             }
-            pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, true));
             statusLabel.setText("Paused");
         } else {
-            pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+            pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
             if (currentFilePath != null) {
                 // Create new thread ref if needed
                 if (!fileThreadRefs.containsKey(currentFilePath)) {
@@ -453,7 +498,9 @@ public class ApplicationController {
 
         // File name label
         Label fileName = new Label(new File(filePath).getName());
-        fileName.setStyle("-fx-font-size: 9; -fx-text-fill: #333333;");
+        int tabFontSize = Math.max(8, appearanceSettings.getFontSize() - 4);
+        String tabFontWeightStyle = appearanceSettings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
+        fileName.setStyle("-fx-font-size: " + tabFontSize + "; -fx-text-fill: #333333; " + tabFontWeightStyle);
 
         // Close button
         Button closeTab = new Button("✕");

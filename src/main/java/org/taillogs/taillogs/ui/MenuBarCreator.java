@@ -5,6 +5,8 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Alert;
 import javafx.application.Platform;
+import org.taillogs.taillogs.config.AppearanceSettings;
+import org.taillogs.taillogs.utils.FontStylesUtil;
 
 public class MenuBarCreator {
     private MenuBar menuBar;
@@ -20,6 +22,7 @@ public class MenuBarCreator {
         void onAbout();
         void onShortcuts();
         void onSetTheme(String theme);
+        void onSettings();
     }
 
     public MenuBarCreator(MenuCallbacks callbacks) {
@@ -30,12 +33,8 @@ public class MenuBarCreator {
     private void createMenuBar() {
         menuBar = new MenuBar();
         // Set menu bar styling - bright blue background with white text
-        menuBar.setStyle(
-            "-fx-background-color: #2196F3; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 12; " +
-            "-fx-padding: 5px;"
-        );
+        AppearanceSettings defaultSettings = new AppearanceSettings();
+        menuBar.setStyle(FontStylesUtil.getMenuBarStyle(defaultSettings));
 
         // File Menu
         Menu fileMenu = new Menu("File");
@@ -81,6 +80,9 @@ public class MenuBarCreator {
         Menu appearanceMenu = new Menu("Appearance");
         appearanceMenu.setStyle("-fx-text-fill: white;");
 
+        MenuItem settingsItem = new MenuItem("⚙ Settings");
+        settingsItem.setOnAction(e -> callbacks.onSettings());
+
         MenuItem lightThemeItem = new MenuItem("☀ Light Theme");
         lightThemeItem.setOnAction(e -> callbacks.onSetTheme("light"));
 
@@ -90,7 +92,8 @@ public class MenuBarCreator {
         MenuItem monokaiThemeItem = new MenuItem("🎨 Monokai Theme");
         monokaiThemeItem.setOnAction(e -> callbacks.onSetTheme("monokai"));
 
-        appearanceMenu.getItems().addAll(lightThemeItem, darkThemeItem, monokaiThemeItem);
+        appearanceMenu.getItems().addAll(settingsItem, new javafx.scene.control.SeparatorMenuItem(),
+                lightThemeItem, darkThemeItem, monokaiThemeItem);
 
         // Help Menu
         Menu helpMenu = new Menu("Help");
@@ -114,6 +117,10 @@ public class MenuBarCreator {
 
     public MenuBar getMenuBar() {
         return menuBar;
+    }
+
+    public void applyAppearanceSettings(AppearanceSettings settings) {
+        menuBar.setStyle(FontStylesUtil.getMenuBarStyle(settings));
     }
 
     private void showInfo(String title, String message) {

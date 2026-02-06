@@ -61,9 +61,10 @@
                            promptText="Search log content..."/>
             </HBox>
 
-            <!-- Text Display Area -->
+            <!-- Text Display Area with Scrollbars -->
             <InlineCssTextArea fx:id="logTextArea" VBox.vgrow="ALWAYS"
-                      style="-fx-font-family: 'Courier New'; -fx-font-size: 13; -fx-padding: 12; -fx-border-color: transparent;"
+                      minHeight="200"
+                      style="-fx-font-family: 'Courier New'; -fx-font-size: 13; -fx-padding: 12; -fx-border-color: #eeeeee; -fx-border-width: 1 0 0 0; -fx-control-inner-background: #ffffff; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;"
                       wrapText="false"/>
 
             <!-- Status Bar -->

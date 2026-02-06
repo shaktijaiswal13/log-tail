@@ -7,10 +7,14 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.Modality;
 
 import org.taillogs.taillogs.screens.HomeController;
 import org.taillogs.taillogs.screens.ApplicationController;
+import org.taillogs.taillogs.screens.SettingsController;
 import org.taillogs.taillogs.ui.MenuBarCreator;
+import org.taillogs.taillogs.config.AppearanceSettings;
+import org.taillogs.taillogs.config.PreferencesManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -150,6 +154,11 @@ public class MainApplication extends Application {
             public void onSetTheme(String theme) {
                 showThemeDialog(theme);
             }
+
+            @Override
+            public void onSettings() {
+                showSettingsDialog();
+            }
         });
 
         // Add menu bar to the app scene
@@ -194,6 +203,37 @@ public class MainApplication extends Application {
         alert.setHeaderText("Theme Changed");
         alert.setContentText("Theme changed to " + theme.substring(0, 1).toUpperCase() + theme.substring(1));
         alert.showAndWait();
+    }
+
+    private void showSettingsDialog() {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("settings-view.fxml"));
+            javafx.scene.layout.VBox root = fxmlLoader.load();
+            SettingsController settingsController = fxmlLoader.getController();
+
+            Stage settingsStage = new Stage();
+            settingsStage.setTitle("Settings");
+            settingsStage.setScene(new Scene(root, 500, 300));
+            settingsStage.initModality(Modality.APPLICATION_MODAL);
+            settingsStage.initOwner(primaryStage);
+
+            settingsStage.showAndWait();
+
+            if (settingsController.isOkPressed()) {
+                AppearanceSettings settings = settingsController.getSettings();
+                PreferencesManager.saveAppearanceSettings(settings);
+
+                // Apply settings to current view
+                appController.applyAppearanceSettings(settings);
+                menuBarCreator.applyAppearanceSettings(settings);
+            }
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Failed to open settings");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
     }
 
     public void showHomeScene() {
