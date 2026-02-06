@@ -7,7 +7,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.TextField;
-import org.fxmisc.richtext.InlineCssTextArea;
+import org.fxmisc.richtext.CodeArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -23,6 +23,7 @@ import javafx.collections.ObservableList;
 import org.taillogs.taillogs.utils.FileOperations;
 import org.taillogs.taillogs.utils.FileOperations.TailThreadRef;
 import org.taillogs.taillogs.utils.FontStylesUtil;
+import org.taillogs.taillogs.utils.SyntaxHighlighter;
 import org.taillogs.taillogs.config.AppearanceSettings;
 import org.taillogs.taillogs.config.PreferencesManager;
 
@@ -47,7 +48,7 @@ public class ApplicationController {
     @FXML
     private TextField searchField;
     @FXML
-    private InlineCssTextArea logTextArea;
+    private CodeArea logArea;
     @FXML
     private Label statusLabel;
     @FXML
@@ -108,7 +109,7 @@ public class ApplicationController {
         this.appearanceSettings = settings;
 
         // Apply to log text area
-        logTextArea.setStyle(FontStylesUtil.getLogTextAreaStyle(settings));
+        logArea.setStyle(FontStylesUtil.getLogTextAreaStyle(settings));
 
         // Apply to search field
         searchField.setStyle(FontStylesUtil.getSearchFieldStyle(settings));
@@ -133,14 +134,14 @@ public class ApplicationController {
     }
 
     private void setupUI() {
-        logTextArea.setWrapText(false);
-        logTextArea.setEditable(false);
+        logArea.setWrapText(false);
+        logArea.setEditable(false);
 
         // Configure scrollbars to always be visible
         String scrollbarCSS = "-fx-control-inner-background: #ffffff; " +
                              "-fx-padding: 0; " +
                              "-fx-text-fill: #333333;";
-        logTextArea.setStyle(logTextArea.getStyle() + " " + scrollbarCSS);
+        logArea.setStyle(logArea.getStyle() + " " + scrollbarCSS);
 
         // Setup hover effects for buttons
         setupButtonHoverEffects();
@@ -243,16 +244,16 @@ public class ApplicationController {
             TailThreadRef fileThreadRef = new TailThreadRef();
             fileThreadRefs.put(currentFilePath, fileThreadRef);
 
-            logTextArea.clear();
-            long fileSize = FileOperations.loadFileContent(logTextArea, currentFilePath);
+            logArea.clear();
+            long fileSize = FileOperations.loadFileContent(logArea, currentFilePath);
             // Initialize file position to current file size so tailing starts from here
             fileThreadRef.setFilePosition(fileSize);
             fileInfoLabel.setText("📄 " + new File(currentFilePath).getName());
 
             // Start tailing with the file-specific thread ref
-            FileOperations.startTailing(currentFilePath, logTextArea, fileThreadRef);
+            FileOperations.startTailing(currentFilePath, logArea, fileThreadRef);
             statusLabel.setText("Tailing: " + new File(currentFilePath).getName());
-            originalLogContent = logTextArea.getText();
+            originalLogContent = logArea.getText();
         }
     }
 
@@ -273,7 +274,7 @@ public class ApplicationController {
                 if (!fileThreadRefs.containsKey(currentFilePath)) {
                     fileThreadRefs.put(currentFilePath, new TailThreadRef());
                 }
-                FileOperations.startTailing(currentFilePath, logTextArea, fileThreadRefs.get(currentFilePath));
+                FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath));
                 statusLabel.setText("Tailing...");
             }
         }
@@ -281,16 +282,16 @@ public class ApplicationController {
 
     @FXML
     protected void onClear() {
-        logTextArea.clear();
+        logArea.clear();
         statusLabel.setText("Cleared");
     }
 
     @FXML
     protected void onRefresh() {
         if (currentFilePath != null && new File(currentFilePath).exists()) {
-            FileOperations.refreshFile(logTextArea, currentFilePath);
+            FileOperations.refreshFile(logArea, currentFilePath);
             statusLabel.setText("Refreshed");
-            originalLogContent = logTextArea.getText();
+            originalLogContent = logArea.getText();
         }
     }
 
@@ -308,9 +309,9 @@ public class ApplicationController {
         int matchPos = matchPositions.get(currentMatchIndex);
 
         // Move caret to match and scroll to it
-        logTextArea.moveTo(matchPos);
-        logTextArea.requestFollowCaret();
-        logTextArea.deselect();
+        logArea.moveTo(matchPos);
+        logArea.requestFollowCaret();
+        logArea.deselect();
 
         statusLabel.setText("Match " + (currentMatchIndex + 1) + " of " + matchPositions.size());
     }
@@ -321,7 +322,7 @@ public class ApplicationController {
         if (searchTerm.isEmpty()) {
             // Remove all highlighting when search is cleared
             clearHighlights();
-            logTextArea.deselect();
+            logArea.deselect();
             statusLabel.setText("Ready");
             matchPositions.clear();
             currentMatchIndex = 0;
@@ -329,7 +330,7 @@ public class ApplicationController {
         }
 
         // Get current content (don't clear it)
-        String content = logTextArea.getText();
+        String content = logArea.getText();
         if (content.isEmpty()) {
             return;
         }
@@ -346,56 +347,25 @@ public class ApplicationController {
             startIndex += searchTerm.length();
         }
 
-        // Apply yellow highlighting to all matches
-        // Get current content length for validation
-        int contentLength = logTextArea.getLength();
-        if (contentLength == 0) {
-            statusLabel.setText("No content to search");
-            return;
-        }
-        
-        // Clear any existing styles first
-        logTextArea.clearStyle(0, contentLength);
-        
-        // Apply yellow highlighting to all matches
         if (!matchPositions.isEmpty()) {
-            // Apply styles using InlineCssTextArea's setStyle method
-            // The CSS property for background in RichTextFX is -rtfx-background-color
-            for (int matchPos : matchPositions) {
-                int endPos = matchPos + searchTerm.length();
-                if (matchPos >= 0 && endPos <= contentLength) {
-                    // Use RichTextFX specific CSS property for background color
-                    // Format: -rtfx-background-color: color;
-                    logTextArea.setStyle(matchPos, endPos, "-rtfx-background-color: yellow;");
-                }
-            }
-
-            // Scroll to first match
+            // Scroll to and select first match
             int firstMatchPos = matchPositions.get(0);
-            if (firstMatchPos >= 0 && firstMatchPos < contentLength) {
-                logTextArea.moveTo(firstMatchPos);
-                logTextArea.requestFollowCaret();
-                logTextArea.deselect();
-            }
+            logArea.moveTo(firstMatchPos);
+            logArea.requestFollowCaret();
+            logArea.selectRange(firstMatchPos, firstMatchPos + searchTerm.length());
 
             // Update status
             statusLabel.setText("Found " + matchPositions.size() + " match" + (matchPositions.size() == 1 ? "" : "es"));
         } else {
             // No matches found
-            logTextArea.deselect();
+            logArea.deselect();
             statusLabel.setText("No matches found");
         }
     }
 
     private void clearHighlights() {
-        // Clear all inline styles by resetting the entire text area style
-        Platform.runLater(() -> {
-            String content = logTextArea.getText();
-            if (!content.isEmpty()) {
-                // Remove all inline styles by clearing style for the entire range
-                logTextArea.clearStyle(0, content.length());
-            }
-        });
+        // Clear selection highlighting
+        logArea.deselect();
     }
 
     // Setter for onBack callback
@@ -464,7 +434,7 @@ public class ApplicationController {
                 loadCurrentFile();
             } else {
                 currentFilePath = null;
-                logTextArea.clear();
+                logArea.clear();
                 fileInfoLabel.setText("Ready");
                 statusLabel.setText("No files open");
             }

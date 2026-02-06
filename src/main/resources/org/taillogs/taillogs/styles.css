@@ -1,0 +1,20 @@
+.code-area {
+    -fx-background-color: #bf2424
+    -fx-text-fill: #d4d4d4;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 13;
+    -fx-padding: 5;
+}
+
+.error {
+    -fx-fill: #ff5555;
+    -fx-font-weight: bold;
+}
+
+.warn {
+    -fx-fill: #ffaa00;
+}
+
+.info {
+    -fx-fill: #55aaff;
+}
