@@ -6,9 +6,11 @@ public class FontStylesUtil {
 
     public static String getLogTextAreaStyle(AppearanceSettings settings) {
         String fontWeightStyle = settings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
+        String backgroundColor = settings.getCodeAreaBackgroundColor();
         return "-fx-font-family: 'Courier New'; -fx-font-size: " + settings.getFontSize() + "; " +
                 fontWeightStyle +
-                "-fx-padding: 5; -fx-text-fill: #333333;";
+                "-fx-padding: 5; -fx-text-fill: #000000; " +
+                "-fx-background-color: " + backgroundColor + ";";
     }
 
     public static String getMenuBarStyle(AppearanceSettings settings) {

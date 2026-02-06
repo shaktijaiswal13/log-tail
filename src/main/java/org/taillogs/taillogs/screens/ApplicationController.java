@@ -152,40 +152,9 @@ public class ApplicationController {
     }
     
     private void setupButtonHoverEffects() {
-        int buttonFontSize = appearanceSettings.getFontSize() - 4;
-        String fontWeightStyle = appearanceSettings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
-
-        // Tail button hover effect
-        pauseBtn.setOnMouseEntered(e -> {
-            if (!pauseMode) {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #d0d0d0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-            } else {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-            }
-        });
-        pauseBtn.setOnMouseExited(e -> {
-            if (!pauseMode) {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-            } else {
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-            }
-        });
-
-        // Clear button hover effect
-        clearBtn.setOnMouseEntered(e -> {
-            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-        });
-        clearBtn.setOnMouseExited(e -> {
-            clearBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-        });
-
-        // Refresh button hover effect
-        refreshBtn.setOnMouseEntered(e -> {
-            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: #f0f0f0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-        });
-        refreshBtn.setOnMouseExited(e -> {
-            refreshBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: " + buttonFontSize + "; -fx-background-color: white; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " + fontWeightStyle);
-        });
+        // Buttons now use CSS styling for hover effects to prevent scaling
+        // Just update the base colors based on pause state
+        updateButtonStyles();
     }
 
     public void setCurrentFile(String filePath) {

@@ -26,7 +26,8 @@ public class PreferencesManager {
                 if (lines.length >= 2) {
                     int fontSize = Integer.parseInt(lines[0].trim());
                     String fontWeight = lines[1].trim();
-                    return new AppearanceSettings(fontSize, fontWeight);
+                    String backgroundColor = lines.length >= 3 ? lines[2].trim() : "#ffffff";
+                    return new AppearanceSettings(fontSize, fontWeight, backgroundColor);
                 }
             }
         } catch (IOException | NumberFormatException e) {
@@ -37,7 +38,7 @@ public class PreferencesManager {
 
     public static void saveAppearanceSettings(AppearanceSettings settings) {
         try {
-            String content = settings.getFontSize() + "\n" + settings.getFontWeight();
+            String content = settings.getFontSize() + "\n" + settings.getFontWeight() + "\n" + settings.getCodeAreaBackgroundColor();
             Files.write(Paths.get(PREFS_FILE), content.getBytes());
         } catch (IOException e) {
             System.err.println("Failed to save preferences: " + e.getMessage());

@@ -3,13 +3,15 @@ package org.taillogs.taillogs.config;
 public class AppearanceSettings {
     private int fontSize = 13;
     private String fontWeight = "Regular";
+    private String codeAreaBackgroundColor = "#ffffff";
 
     public AppearanceSettings() {
     }
 
-    public AppearanceSettings(int fontSize, String fontWeight) {
+    public AppearanceSettings(int fontSize, String fontWeight, String codeAreaBackgroundColor) {
         this.fontSize = fontSize;
         this.fontWeight = fontWeight;
+        this.codeAreaBackgroundColor = codeAreaBackgroundColor;
     }
 
     public int getFontSize() {
@@ -32,11 +34,20 @@ public class AppearanceSettings {
         return fontWeight.equals("Bold") ? "-fx-font-weight: bold;" : "";
     }
 
+    public String getCodeAreaBackgroundColor() {
+        return codeAreaBackgroundColor;
+    }
+
+    public void setCodeAreaBackgroundColor(String codeAreaBackgroundColor) {
+        this.codeAreaBackgroundColor = codeAreaBackgroundColor;
+    }
+
     @Override
     public String toString() {
         return "AppearanceSettings{" +
                 "fontSize=" + fontSize +
                 ", fontWeight='" + fontWeight + '\'' +
+                ", codeAreaBackgroundColor='" + codeAreaBackgroundColor + '\'' +
                 '}';
     }
 }

@@ -1,5 +1,5 @@
 .code-area {
-    -fx-background-color: #d2d2d2;
+    -fx-background-color: #ffffff;
     -fx-text-fill: #000000;
     -fx-font-family: 'Consolas', 'Courier New', monospace;
     -fx-font-size: 13;
@@ -29,4 +29,15 @@
     -fx-fill: #ff0000;
     -fx-font-weight: bold;
     -fx-font-size: 14;
+}
+
+/* Button styling to prevent scaling on hover */
+.button {
+    -fx-padding: 3 8 3 8;
+    -fx-border-width: 1;
+    -fx-border-radius: 0;
+}
+
+.button:hover {
+    -fx-opacity: 0.9;
 }
