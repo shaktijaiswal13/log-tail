@@ -704,23 +704,37 @@ public class ApplicationController {
     /**
      * Reapply highlighting when custom patterns change
      */
+    /**
+     * Reapply highlighting when custom patterns change
+     */
     private void reapplyHighlighting() {
+        System.out.println("[ApplicationController] reapplyHighlighting() called");
+        
         if (logArea.getText().isEmpty()) {
+            System.out.println("[ApplicationController] logArea is empty, skipping");
             return;
         }
 
+        System.out.println("[ApplicationController] Text length: " + logArea.getText().length());
+        System.out.println("[ApplicationController] Search term: '" + currentSearchTerm + "', match positions: " + matchPositions.size());
+
         if (currentSearchTerm.isEmpty() || matchPositions.isEmpty()) {
             // No search active, apply combined highlighting
+            System.out.println("[ApplicationController] No active search, applying combined highlighting");
             highlightManager.applyCombinedHighlighting(logArea);
         } else {
             // Search is active, keep search highlighting but apply combined as base
+            System.out.println("[ApplicationController] Search is active, applying search highlighting");
             applySearchHighlighting();
         }
 
         if (rightPanelController != null) {
             rightPanelController.refreshHighlights();
         }
+        
+        System.out.println("[ApplicationController] reapplyHighlighting() completed");
     }
+
 
     /**
      * Apply filtering when filter rules change

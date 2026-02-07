@@ -37,12 +37,15 @@ public class RightPanelController {
     private Runnable onFiltersChanged;
 
     public void initialize() {
+        System.out.println("[RightPanelController] initialize() called");
         setupHighlightsTab();
         setupFiltersTab();
         setupBookmarksTab();
+        System.out.println("[RightPanelController] initialize() completed");
     }
 
     public void setManagers(HighlightManager highlightManager, FilterManager filterManager, BookmarkManager bookmarkManager) {
+        System.out.println("[RightPanelController] setManagers() called");
         this.highlightManager = highlightManager;
         this.filterManager = filterManager;
         this.bookmarkManager = bookmarkManager;
@@ -53,6 +56,7 @@ public class RightPanelController {
     }
 
     public void setOnHighlightsChanged(Runnable callback) {
+        System.out.println("[RightPanelController] setOnHighlightsChanged() callback registered: " + (callback != null));
         this.onHighlightsChanged = callback;
     }
 
@@ -89,17 +93,26 @@ public class RightPanelController {
                     checkbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                         pattern.setEnabled(newVal);
                         highlightManager.togglePattern(pattern.getId());
-                        if (onHighlightsChanged != null) onHighlightsChanged.run();
+                        System.out.println("[RightPanelController] Pattern toggled: " + pattern.getPattern() + " enabled=" + newVal);
+                        if (onHighlightsChanged != null) {
+                            System.out.println("[RightPanelController] Calling onHighlightsChanged callback");
+                            onHighlightsChanged.run();
+                        }
                     });
 
                     // Color indicator
                     ColorPicker colorPicker = new ColorPicker(Color.web(pattern.getColor()));
                     colorPicker.setPrefWidth(50);
                     colorPicker.setOnAction(e -> {
-                        pattern.setColor(colorPicker.getValue().toString().replace("0x", "#"));
+                        String newColor = colorPicker.getValue().toString().replace("0x", "#");
+                        System.out.println("[RightPanelController] Color changed for pattern: " + pattern.getPattern() + " to " + newColor);
+                        pattern.setColor(newColor);
                         highlightManager.removePattern(pattern.getId());
                         highlightManager.addPattern(pattern);
-                        if (onHighlightsChanged != null) onHighlightsChanged.run();
+                        if (onHighlightsChanged != null) {
+                            System.out.println("[RightPanelController] Calling onHighlightsChanged callback");
+                            onHighlightsChanged.run();
+                        }
                     });
 
                     // Pattern text
@@ -109,12 +122,16 @@ public class RightPanelController {
                     HBox.setHgrow(patternLabel, Priority.ALWAYS);
 
                     // Delete button
-                    Button deleteBtn = new Button("×");
+                    Button deleteBtn = new Button("x");
                     deleteBtn.setPrefWidth(30);
                     deleteBtn.setStyle("-fx-font-size: 14;");
                     deleteBtn.setOnAction(e -> {
+                        System.out.println("[RightPanelController] Deleting pattern: " + pattern.getPattern());
                         highlightManager.removePattern(pattern.getId());
-                        if (onHighlightsChanged != null) onHighlightsChanged.run();
+                        if (onHighlightsChanged != null) {
+                            System.out.println("[RightPanelController] Calling onHighlightsChanged callback");
+                            onHighlightsChanged.run();
+                        }
                     });
 
                     hbox.getChildren().addAll(checkbox, colorPicker, patternLabel, deleteBtn);
@@ -125,6 +142,8 @@ public class RightPanelController {
     }
 
     private void showAddHighlightDialog() {
+        System.out.println("[RightPanelController] showAddHighlightDialog() called");
+        
         Dialog<HighlightPattern> dialog = new Dialog<>();
         dialog.setTitle("Add Highlight Pattern");
         dialog.setHeaderText("Create a new highlight pattern");
@@ -150,9 +169,11 @@ public class RightPanelController {
 
         dialog.setResultConverter(buttonType -> {
             if (buttonType == ButtonType.OK && !patternField.getText().isEmpty()) {
+                String colorStr = colorPicker.getValue().toString().replace("0x", "#");
+                System.out.println("[RightPanelController] Creating pattern: " + patternField.getText() + " with color: " + colorStr);
                 HighlightPattern pattern = new HighlightPattern(
                         patternField.getText(),
-                        colorPicker.getValue().toString().replace("0x", "#"),
+                        colorStr,
                         isRegexCheckbox.isSelected()
                 );
                 return pattern;
@@ -162,8 +183,17 @@ public class RightPanelController {
 
         Optional<HighlightPattern> result = dialog.showAndWait();
         result.ifPresent(pattern -> {
+            System.out.println("[RightPanelController] Pattern created: " + pattern);
             highlightManager.addPattern(pattern);
-            if (onHighlightsChanged != null) onHighlightsChanged.run();
+            System.out.println("[RightPanelController] Pattern added to highlightManager, patterns count: " + highlightManager.getPatterns().size());
+            
+            if (onHighlightsChanged != null) {
+                System.out.println("[RightPanelController] Calling onHighlightsChanged callback...");
+                onHighlightsChanged.run();
+                System.out.println("[RightPanelController] onHighlightsChanged callback completed");
+            } else {
+                System.err.println("[RightPanelController] WARNING: onHighlightsChanged callback is null!");
+            }
         });
     }
 
@@ -210,7 +240,7 @@ public class RightPanelController {
                     HBox.setHgrow(ruleLabel, Priority.ALWAYS);
 
                     // Delete button
-                    Button deleteBtn = new Button("×");
+                    Button deleteBtn = new Button("x");
                     deleteBtn.setPrefWidth(30);
                     deleteBtn.setStyle("-fx-font-size: 14;");
                     deleteBtn.setOnAction(e -> {
@@ -299,7 +329,7 @@ public class RightPanelController {
                         // Navigate to bookmark (to be implemented by ApplicationController)
                     });
 
-                    Button deleteBtn = new Button("×");
+                    Button deleteBtn = new Button("x");
                     deleteBtn.setPrefWidth(30);
                     deleteBtn.setStyle("-fx-font-size: 12;");
                     deleteBtn.setOnAction(e -> bookmarkManager.removeBookmark(bookmark.getId()));
