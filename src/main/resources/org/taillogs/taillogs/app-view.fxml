@@ -83,8 +83,7 @@
 
     <!-- RIGHT: Right Panel Container -->
     <right>
-        <VBox fx:id="rightPanelContainer" minWidth="280" maxWidth="400"
-              style="-fx-background-color: #f5f5f5; -fx-border-color: #dddddd; -fx-border-width: 0 0 0 1;">
+        <VBox fx:id="rightPanelContainer" prefWidth="320" minWidth="280" maxWidth="400" style="-fx-background-color: #f5f5f5; -fx-border-color: #dddddd; -fx-border-width: 0 0 0 1;">
             <!-- Will be populated by ApplicationController -->
         </VBox>
     </right>

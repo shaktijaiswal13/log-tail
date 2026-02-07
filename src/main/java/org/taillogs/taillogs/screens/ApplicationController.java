@@ -198,8 +198,13 @@ public class ApplicationController {
 
             rightPanelContainer.getChildren().add(rightPanelContent);
             VBox.setVgrow(rightPanelContent, Priority.ALWAYS);
+            rightPanelContent.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            System.out.println("Right panel loaded successfully");
         } catch (IOException e) {
             System.err.println("Failed to load right panel: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Unexpected error loading right panel: " + e.getMessage());
             e.printStackTrace();
         }
     }
