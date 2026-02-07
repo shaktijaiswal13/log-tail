@@ -38,4 +38,31 @@ public class SyntaxHighlighter {
         StyleSpans<Collection<String>> spans = spansBuilder.create();
         logArea.setStyleSpans(0, spans);
     }
+
+    /**
+     * Build style spans for log level highlighting (ERROR, WARN, INFO)
+     * This is used internally by HighlightManager
+     */
+    public static StyleSpans<Collection<String>> buildLogLevelSpans(String text) {
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+        Matcher matcher = LOG_PATTERN.matcher(text);
+        int lastEnd = 0;
+
+        while (matcher.find()) {
+            spansBuilder.add(Collections.emptyList(), matcher.start() - lastEnd);
+
+            if (matcher.group("ERROR") != null) {
+                spansBuilder.add(Collections.singleton("error"), matcher.end() - matcher.start());
+            } else if (matcher.group("WARN") != null) {
+                spansBuilder.add(Collections.singleton("warn"), matcher.end() - matcher.start());
+            } else if (matcher.group("INFO") != null) {
+                spansBuilder.add(Collections.singleton("info"), matcher.end() - matcher.start());
+            }
+
+            lastEnd = matcher.end();
+        }
+
+        spansBuilder.add(Collections.emptyList(), text.length() - lastEnd);
+        return spansBuilder.create();
+    }
 }

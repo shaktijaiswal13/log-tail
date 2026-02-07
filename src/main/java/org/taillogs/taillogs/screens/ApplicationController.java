@@ -1,6 +1,7 @@
 package org.taillogs.taillogs.screens;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -20,6 +21,10 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import org.taillogs.taillogs.managers.BookmarkManager;
+import org.taillogs.taillogs.managers.FilterManager;
+import org.taillogs.taillogs.managers.HighlightManager;
+import org.taillogs.taillogs.models.Bookmark;
 import org.taillogs.taillogs.utils.FileOperations;
 import org.taillogs.taillogs.utils.FileOperations.TailThreadRef;
 import org.taillogs.taillogs.utils.FontStylesUtil;
@@ -30,6 +35,7 @@ import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,6 +65,8 @@ public class ApplicationController {
     private HBox menuBarContainer;
     @FXML
     private HBox tabBar;
+    @FXML
+    private VBox rightPanelContainer;
 
     private String currentFilePath;
     private String currentFolderPath;
@@ -77,6 +85,12 @@ public class ApplicationController {
     private Runnable onBack;
     private AppearanceSettings appearanceSettings;
 
+    // Managers for highlights, filters, and bookmarks
+    private HighlightManager highlightManager;
+    private FilterManager filterManager;
+    private BookmarkManager bookmarkManager;
+    private RightPanelController rightPanelController;
+
     public void initialize() {
         tailThreadRef = new TailThreadRef();
         fileList = java.util.Collections.emptyList();
@@ -89,6 +103,14 @@ public class ApplicationController {
         openFiles = FXCollections.observableArrayList();
         fileContentCache = new HashMap<>();
         fileThreadRefs = new HashMap<>();
+
+        // Initialize managers
+        highlightManager = new HighlightManager();
+        filterManager = new FilterManager();
+        bookmarkManager = new BookmarkManager();
+
+        // Setup right panel
+        setupRightPanel();
 
         // Setup listener for openFiles to update tab bar
         openFiles.addListener((javafx.collections.ListChangeListener<String>) change -> {
@@ -157,6 +179,24 @@ public class ApplicationController {
         updateButtonStyles();
     }
 
+    private void setupRightPanel() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("right-panel-view.fxml"));
+            VBox rightPanelContent = loader.load();
+            rightPanelController = loader.getController();
+            rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
+
+            // Set callbacks for when highlights or filters change
+            rightPanelController.setOnHighlightsChanged(this::reapplyHighlighting);
+            rightPanelController.setOnFiltersChanged(this::applyFilteringToContent);
+
+            rightPanelContainer.getChildren().add(rightPanelContent);
+            VBox.setVgrow(rightPanelContent, Priority.ALWAYS);
+        } catch (IOException e) {
+            System.err.println("Failed to load right panel: " + e.getMessage());
+        }
+    }
+
     public void setCurrentFile(String filePath) {
         this.currentFilePath = filePath;
         this.currentFolderPath = new File(filePath).getParent();
@@ -166,6 +206,9 @@ public class ApplicationController {
         if (!openFiles.contains(filePath)) {
             openFiles.add(filePath);
         }
+
+        // Update bookmark manager to use current file
+        bookmarkManager.setCurrentFile(filePath);
 
         loadCurrentFile();
     }
@@ -179,6 +222,8 @@ public class ApplicationController {
             if (!openFiles.contains(currentFilePath)) {
                 openFiles.add(currentFilePath);
             }
+            // Update bookmark manager to use current file
+            bookmarkManager.setCurrentFile(currentFilePath);
             loadCurrentFile();
         }
     }
@@ -508,6 +553,7 @@ public class ApplicationController {
                 // Select the file that was after the removed one, or the last one
                 int newIndex = Math.min(removedIndex, openFiles.size() - 1);
                 currentFilePath = openFiles.get(newIndex);
+                bookmarkManager.setCurrentFile(currentFilePath);
                 loadCurrentFile();
             } else {
                 currentFilePath = null;
@@ -515,6 +561,62 @@ public class ApplicationController {
                 fileInfoLabel.setText("Ready");
                 statusLabel.setText("No files open");
             }
+        }
+    }
+
+    /**
+     * Reapply highlighting when custom patterns change
+     */
+    private void reapplyHighlighting() {
+        if (logArea.getText().isEmpty()) {
+            return;
+        }
+
+        if (currentSearchTerm.isEmpty() || matchPositions.isEmpty()) {
+            // No search active, apply combined highlighting
+            highlightManager.applyCombinedHighlighting(logArea);
+        } else {
+            // Search is active, keep search highlighting but apply combined as base
+            applySearchHighlighting();
+        }
+
+        if (rightPanelController != null) {
+            rightPanelController.refreshHighlights();
+        }
+    }
+
+    /**
+     * Apply filtering when filter rules change
+     */
+    private void applyFilteringToContent() {
+        if (logArea.getText().isEmpty()) {
+            return;
+        }
+
+        if (filterManager.hasActiveFilters()) {
+            // Apply filters to original content
+            List<FilterManager.FilteredLine> filtered = filterManager.filterContent(originalLogContent);
+
+            // Build filtered display
+            StringBuilder filteredContent = new StringBuilder();
+            for (FilterManager.FilteredLine line : filtered) {
+                filteredContent.append(line.content).append("\n");
+            }
+
+            logArea.clear();
+            logArea.appendText(filteredContent.toString());
+            highlightManager.applyCombinedHighlighting(logArea);
+            statusLabel.setText("Showing " + filtered.size() + " of " + originalLogContent.split("\n", -1).length + " lines");
+        } else {
+            // No filters, show original content
+            logArea.clear();
+            logArea.appendText(originalLogContent);
+            highlightManager.applyCombinedHighlighting(logArea);
+            statusLabel.setText("Ready");
+        }
+
+        if (rightPanelController != null) {
+            rightPanelController.refreshFilters();
         }
     }
 
