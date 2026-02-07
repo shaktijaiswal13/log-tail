@@ -180,26 +180,54 @@ public class ApplicationController {
     }
 
     private void setupRightPanel() {
+        System.out.println("setupRightPanel() called");
+
+        if (rightPanelContainer == null) {
+            System.err.println("ERROR: rightPanelContainer is null!");
+            return;
+        }
+
+        System.out.println("rightPanelContainer found: " + rightPanelContainer);
+
         try {
             FXMLLoader loader = new FXMLLoader();
             java.net.URL fxmlUrl = ApplicationController.class.getResource("right-panel-view.fxml");
+
+            System.out.println("FXML URL: " + fxmlUrl);
+
             if (fxmlUrl == null) {
                 System.err.println("ERROR: right-panel-view.fxml not found");
                 return;
             }
+
             loader.setLocation(fxmlUrl);
+            System.out.println("Loading FXML from: " + fxmlUrl);
+
             VBox rightPanelContent = loader.load();
+            System.out.println("FXML loaded successfully");
+
             rightPanelController = loader.getController();
+            System.out.println("Controller obtained: " + rightPanelController);
+
+            if (rightPanelController == null) {
+                System.err.println("ERROR: RightPanelController is null!");
+                return;
+            }
+
             rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
+            System.out.println("Managers set");
 
             // Set callbacks for when highlights or filters change
             rightPanelController.setOnHighlightsChanged(this::reapplyHighlighting);
             rightPanelController.setOnFiltersChanged(this::applyFilteringToContent);
+            System.out.println("Callbacks set");
 
             rightPanelContainer.getChildren().add(rightPanelContent);
             VBox.setVgrow(rightPanelContent, Priority.ALWAYS);
             rightPanelContent.setPrefHeight(Region.USE_COMPUTED_SIZE);
+
             System.out.println("Right panel loaded successfully");
+            System.out.println("Right panel children count: " + rightPanelContainer.getChildren().size());
         } catch (IOException e) {
             System.err.println("Failed to load right panel: " + e.getMessage());
             e.printStackTrace();
