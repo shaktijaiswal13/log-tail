@@ -120,6 +120,24 @@ public class MainApplication extends Application {
             }
 
             @Override
+            public void onOpenRecentFile(String filePath) {
+                File file = new File(filePath);
+                if (file.exists()) {
+                    appController.setCurrentFile(filePath);
+                    menuBarCreator.refreshRecentFilesMenu();
+                    showAppScene();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("File Not Found");
+                    alert.setHeaderText("Cannot Open File");
+                    alert.setContentText("File no longer exists: " + filePath);
+                    alert.showAndWait();
+                    PreferencesManager.removeRecentFile(filePath);
+                    menuBarCreator.refreshRecentFilesMenu();
+                }
+            }
+
+            @Override
             public void onExit() {
                 appController.stopTailing();
                 primaryStage.close();

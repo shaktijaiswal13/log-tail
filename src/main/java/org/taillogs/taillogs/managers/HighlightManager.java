@@ -28,11 +28,17 @@ public class HighlightManager {
     private static final String CSS_FILE_BASE = System.getProperty("java.io.tmpdir") + File.separator + "taillogs_highlights";
     private String currentCssPath = null;
     private long cssVersion = 0;
+    private String currentFilePath;
 
     public HighlightManager() {
         this.patterns = FXCollections.observableArrayList();
+        System.out.println("[HighlightManager] Initialized (no file loaded yet)");
+    }
+
+    public void setCurrentFile(String filePath) {
+        this.currentFilePath = filePath;
         loadPatterns();
-        System.out.println("[HighlightManager] Initialized with " + patterns.size() + " patterns");
+        System.out.println("[HighlightManager] Set current file to: " + filePath);
     }
 
     public void addPattern(HighlightPattern pattern) {
@@ -337,14 +343,39 @@ public class HighlightManager {
 
     private void loadPatterns() {
         patterns.clear();
-        List<HighlightPattern> loaded = PreferencesManager.loadHighlightPatterns();
+        List<HighlightPattern> loaded;
+
+        if (currentFilePath != null) {
+            // Load per-file patterns
+            loaded = PreferencesManager.loadHighlightPatterns(currentFilePath);
+            if (loaded.isEmpty()) {
+                // Fall back to global patterns if per-file doesn't exist
+                List<HighlightPattern> globalPatterns = PreferencesManager.loadHighlightPatterns();
+                if (!globalPatterns.isEmpty()) {
+                    System.out.println("[HighlightManager] No per-file patterns found, using global patterns as defaults");
+                    loaded = globalPatterns;
+                }
+            }
+        } else {
+            // Load global patterns if no current file
+            loaded = PreferencesManager.loadHighlightPatterns();
+        }
+
         patterns.addAll(loaded);
-        System.out.println("[HighlightManager] Loaded " + loaded.size() + " patterns from preferences");
+        System.out.println("[HighlightManager] Loaded " + loaded.size() + " patterns for file: " + currentFilePath);
     }
 
     private void savePatterns() {
-        PreferencesManager.saveHighlightPatterns(new ArrayList<>(patterns));
-        System.out.println("[HighlightManager] Saved " + patterns.size() + " patterns to preferences");
+        List<HighlightPattern> patternsCopy = new ArrayList<>(patterns);
+
+        if (currentFilePath != null) {
+            // Save per-file patterns
+            PreferencesManager.saveHighlightPatterns(currentFilePath, patternsCopy);
+        } else {
+            // Save global patterns if no current file
+            PreferencesManager.saveHighlightPatterns(patternsCopy);
+        }
+        System.out.println("[HighlightManager] Saved " + patterns.size() + " patterns for file: " + currentFilePath);
     }
 
     private static class Match {

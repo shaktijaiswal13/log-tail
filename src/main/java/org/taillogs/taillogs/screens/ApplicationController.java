@@ -380,6 +380,11 @@ public class ApplicationController {
         // Update bookmark manager to use current file
         bookmarkManager.setCurrentFile(filePath);
 
+        // Update managers to use current file and track recent file
+        highlightManager.setCurrentFile(filePath);
+        filterManager.setCurrentFile(filePath);
+        PreferencesManager.addRecentFile(filePath);
+
         loadCurrentFile();
     }
 
@@ -394,6 +399,12 @@ public class ApplicationController {
             }
             // Update bookmark manager to use current file
             bookmarkManager.setCurrentFile(currentFilePath);
+
+            // Update managers to use current file and track recent file
+            highlightManager.setCurrentFile(currentFilePath);
+            filterManager.setCurrentFile(currentFilePath);
+            PreferencesManager.addRecentFile(currentFilePath);
+
             loadCurrentFile();
         }
     }
@@ -763,6 +774,11 @@ public class ApplicationController {
                 int newIndex = Math.min(removedIndex, openFiles.size() - 1);
                 currentFilePath = openFiles.get(newIndex);
                 bookmarkManager.setCurrentFile(currentFilePath);
+
+                // Update managers to use current file
+                highlightManager.setCurrentFile(currentFilePath);
+                filterManager.setCurrentFile(currentFilePath);
+
                 loadCurrentFile();
             } else {
                 currentFilePath = null;

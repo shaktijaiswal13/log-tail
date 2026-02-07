@@ -12,9 +12,14 @@ import java.util.stream.Collectors;
 
 public class FilterManager {
     private final ObservableList<FilterRule> rules;
+    private String currentFilePath;
 
     public FilterManager() {
         this.rules = FXCollections.observableArrayList();
+    }
+
+    public void setCurrentFile(String filePath) {
+        this.currentFilePath = filePath;
         loadRules();
     }
 
@@ -123,12 +128,36 @@ public class FilterManager {
 
     private void loadRules() {
         rules.clear();
-        List<FilterRule> loaded = PreferencesManager.loadFilterRules();
+        List<FilterRule> loaded;
+
+        if (currentFilePath != null) {
+            // Load per-file rules
+            loaded = PreferencesManager.loadFilterRules(currentFilePath);
+            if (loaded.isEmpty()) {
+                // Fall back to global rules if per-file doesn't exist
+                List<FilterRule> globalRules = PreferencesManager.loadFilterRules();
+                if (!globalRules.isEmpty()) {
+                    loaded = globalRules;
+                }
+            }
+        } else {
+            // Load global rules if no current file
+            loaded = PreferencesManager.loadFilterRules();
+        }
+
         rules.addAll(loaded);
     }
 
     private void saveRules() {
-        PreferencesManager.saveFilterRules(new ArrayList<>(rules));
+        List<FilterRule> rulesCopy = new ArrayList<>(rules);
+
+        if (currentFilePath != null) {
+            // Save per-file rules
+            PreferencesManager.saveFilterRules(currentFilePath, rulesCopy);
+        } else {
+            // Save global rules if no current file
+            PreferencesManager.saveFilterRules(rulesCopy);
+        }
     }
 
     /**
