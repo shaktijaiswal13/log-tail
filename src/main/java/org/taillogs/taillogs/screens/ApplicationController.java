@@ -7,6 +7,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.Separator;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import org.fxmisc.richtext.CodeArea;
 import javafx.scene.layout.BorderPane;
@@ -25,6 +28,8 @@ import org.taillogs.taillogs.managers.BookmarkManager;
 import org.taillogs.taillogs.managers.FilterManager;
 import org.taillogs.taillogs.managers.HighlightManager;
 import org.taillogs.taillogs.models.Bookmark;
+import org.taillogs.taillogs.models.FilterRule;
+import org.taillogs.taillogs.models.HighlightPattern;
 import org.taillogs.taillogs.utils.FileOperations;
 import org.taillogs.taillogs.utils.FileOperations.TailThreadRef;
 import org.taillogs.taillogs.utils.FontStylesUtil;
@@ -184,59 +189,71 @@ public class ApplicationController {
 
         if (rightPanelContainer == null) {
             System.err.println("ERROR: rightPanelContainer is null!");
-            // Try to find it
-            System.err.println("Attempting to diagnose null container...");
             return;
         }
 
-        System.out.println("rightPanelContainer found: " + rightPanelContainer);
-        System.out.println("rightPanelContainer size: " + rightPanelContainer.getPrefWidth() + "x" + rightPanelContainer.getPrefHeight());
-        System.out.println("rightPanelContainer visible: " + rightPanelContainer.isVisible());
+        // Clear the container (remove test label)
+        rightPanelContainer.getChildren().clear();
 
         try {
-            FXMLLoader loader = new FXMLLoader();
-            java.net.URL fxmlUrl = ApplicationController.class.getResource("right-panel-view.fxml");
-
-            System.out.println("FXML URL: " + fxmlUrl);
-
-            if (fxmlUrl == null) {
-                System.err.println("ERROR: right-panel-view.fxml not found");
-                return;
-            }
-
-            loader.setLocation(fxmlUrl);
-            System.out.println("Loading FXML from: " + fxmlUrl);
-
-            VBox rightPanelContent = loader.load();
-            System.out.println("FXML loaded successfully");
-
-            rightPanelController = loader.getController();
-            System.out.println("Controller obtained: " + rightPanelController);
-
-            if (rightPanelController == null) {
-                System.err.println("ERROR: RightPanelController is null!");
-                return;
-            }
-
+            // Try to load from FXML first
+            rightPanelController = new RightPanelController();
             rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
-            System.out.println("Managers set");
 
-            // Set callbacks for when highlights or filters change
-            rightPanelController.setOnHighlightsChanged(this::reapplyHighlighting);
-            rightPanelController.setOnFiltersChanged(this::applyFilteringToContent);
-            System.out.println("Callbacks set");
+            // Create the UI programmatically
+            TabPane tabPane = new TabPane();
+            tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+            tabPane.setPrefWidth(320);
+            VBox.setVgrow(tabPane, Priority.ALWAYS);
 
-            rightPanelContainer.getChildren().add(rightPanelContent);
-            VBox.setVgrow(rightPanelContent, Priority.ALWAYS);
-            rightPanelContent.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            // Highlights Tab
+            VBox highlightsContent = new VBox(8);
+            highlightsContent.setStyle("-fx-padding: 8;");
+            Button addHighlightBtn = new Button("+ Add Highlight Pattern");
+            ListView<HighlightPattern> highlightsListView = new ListView<>(highlightManager.getPatterns());
+            highlightsListView.setPrefHeight(300);
+            VBox.setVgrow(highlightsListView, Priority.ALWAYS);
+            highlightsContent.getChildren().addAll(addHighlightBtn, new Separator(), highlightsListView);
+            Tab highlightsTab = new Tab("Highlights", highlightsContent);
+            highlightsTab.setClosable(false);
 
-            System.out.println("Right panel loaded successfully");
-            System.out.println("Right panel children count: " + rightPanelContainer.getChildren().size());
-        } catch (IOException e) {
-            System.err.println("Failed to load right panel: " + e.getMessage());
-            e.printStackTrace();
+            // Filters Tab
+            VBox filtersContent = new VBox(8);
+            filtersContent.setStyle("-fx-padding: 8;");
+            Button addFilterBtn = new Button("+ Add Filter");
+            ListView<FilterRule> filtersListView = new ListView<>(filterManager.getRules());
+            filtersListView.setPrefHeight(300);
+            VBox.setVgrow(filtersListView, Priority.ALWAYS);
+            Button clearFiltersBtn = new Button("Clear All Filters");
+            filtersContent.getChildren().addAll(addFilterBtn, new Separator(), filtersListView, clearFiltersBtn);
+            Tab filtersTab = new Tab("Filters", filtersContent);
+            filtersTab.setClosable(false);
+
+            // Bookmarks Tab
+            VBox bookmarksContent = new VBox(8);
+            bookmarksContent.setStyle("-fx-padding: 8;");
+            Label instructionsLabel = new Label("Click line numbers to bookmark");
+            instructionsLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 10;");
+            instructionsLabel.setWrapText(true);
+            ListView<Bookmark> bookmarksListView = new ListView<>(bookmarkManager.getBookmarks());
+            bookmarksListView.setPrefHeight(300);
+            VBox.setVgrow(bookmarksListView, Priority.ALWAYS);
+            Button clearBookmarksBtn = new Button("Clear All Bookmarks");
+            bookmarksContent.getChildren().addAll(instructionsLabel, new Separator(), bookmarksListView, clearBookmarksBtn);
+            Tab bookmarksTab = new Tab("Bookmarks", bookmarksContent);
+            bookmarksTab.setClosable(false);
+
+            // Add tabs to TabPane
+            tabPane.getTabs().addAll(highlightsTab, filtersTab, bookmarksTab);
+
+            // Add TabPane to container
+            rightPanelContainer.getChildren().add(tabPane);
+            VBox.setVgrow(tabPane, Priority.ALWAYS);
+
+            System.out.println("Right panel created successfully with 3 tabs");
+
         } catch (Exception e) {
-            System.err.println("Unexpected error loading right panel: " + e.getMessage());
+            System.err.println("Error creating right panel: " + e.getMessage());
             e.printStackTrace();
         }
     }
