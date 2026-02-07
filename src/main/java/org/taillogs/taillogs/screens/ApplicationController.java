@@ -378,7 +378,32 @@ public class ApplicationController {
      * Create a highlighting callback that applies combined highlighting
      */
     private Runnable createHighlightingCallback() {
-        return () -> highlightManager.applyCombinedHighlighting(logArea);
+        return () -> {
+            highlightManager.applyCombinedHighlighting(logArea);
+            
+            // Update originalLogContent based on filter state
+            if (filterManager.hasActiveFilters()) {
+                // When filters are active, we need to update originalLogContent from the file
+                // and then re-apply filters to show the updated filtered view
+                if (currentFilePath != null && new File(currentFilePath).exists()) {
+                    try {
+                        // Read the full file content to update originalLogContent
+                        String fullContent = new String(Files.readAllBytes(Paths.get(currentFilePath)));
+                        originalLogContent = fullContent;
+                        // Re-apply filters with the updated content
+                        applyFilteringToContent();
+                        return; // applyFilteringToContent already applies highlighting
+                    } catch (IOException e) {
+                        // If file read fails, fall back to using current logArea content
+                        // This shouldn't happen in normal operation
+                        System.err.println("Failed to read file for filtering: " + e.getMessage());
+                    }
+                }
+            } else {
+                // No filters active, update originalLogContent to current content
+                originalLogContent = logArea.getText();
+            }
+        };
     }
 
     private void loadCurrentFile() {
@@ -740,13 +765,23 @@ public class ApplicationController {
      * Apply filtering when filter rules change
      */
     private void applyFilteringToContent() {
-        if (logArea.getText().isEmpty()) {
+        // Get the source content - use originalLogContent if available, otherwise use current logArea content
+        String sourceContent = originalLogContent;
+        if (sourceContent == null || sourceContent.isEmpty()) {
+            sourceContent = logArea.getText();
+            // If we're using logArea content and no filters are active, update originalLogContent
+            if (!filterManager.hasActiveFilters() && !sourceContent.isEmpty()) {
+                originalLogContent = sourceContent;
+            }
+        }
+
+        if (sourceContent.isEmpty()) {
             return;
         }
 
         if (filterManager.hasActiveFilters()) {
-            // Apply filters to original content
-            List<FilterManager.FilteredLine> filtered = filterManager.filterContent(originalLogContent);
+            // Apply filters to source content
+            List<FilterManager.FilteredLine> filtered = filterManager.filterContent(sourceContent);
 
             // Build filtered display
             StringBuilder filteredContent = new StringBuilder();
@@ -757,11 +792,12 @@ public class ApplicationController {
             logArea.clear();
             logArea.appendText(filteredContent.toString());
             highlightManager.applyCombinedHighlighting(logArea);
-            statusLabel.setText("Showing " + filtered.size() + " of " + originalLogContent.split("\n", -1).length + " lines");
+            statusLabel.setText("Showing " + filtered.size() + " of " + sourceContent.split("\n", -1).length + " lines");
         } else {
             // No filters, show original content
             logArea.clear();
-            logArea.appendText(originalLogContent);
+            logArea.appendText(sourceContent);
+            originalLogContent = sourceContent; // Update to ensure it's in sync
             highlightManager.applyCombinedHighlighting(logArea);
             statusLabel.setText("Ready");
         }
