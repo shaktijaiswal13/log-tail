@@ -109,9 +109,6 @@ public class ApplicationController {
         filterManager = new FilterManager();
         bookmarkManager = new BookmarkManager();
 
-        // Setup right panel
-        setupRightPanel();
-
         // Setup listener for openFiles to update tab bar
         openFiles.addListener((javafx.collections.ListChangeListener<String>) change -> {
             updateTabBar();
@@ -129,6 +126,9 @@ public class ApplicationController {
 
         setupUI();
         applyAppearanceSettings(appearanceSettings);
+
+        // Setup right panel after UI is ready
+        Platform.runLater(this::setupRightPanel);
     }
 
     public void applyAppearanceSettings(AppearanceSettings settings) {
