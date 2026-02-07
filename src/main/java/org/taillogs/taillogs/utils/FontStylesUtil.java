@@ -24,10 +24,11 @@ public class FontStylesUtil {
 
     public static String getButtonStyle(AppearanceSettings settings, boolean isPaused) {
         String fontWeightStyle = settings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
-        String bgColor = isPaused ? "white" : "#e0e0e0";
-        return "-fx-padding: 3 8 3 8; -fx-font-size: " + (settings.getFontSize() - 4) + "; " +
-                "-fx-background-color: " + bgColor + "; -fx-text-fill: black; " +
-                "-fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0; " +
+        String bgColor = isPaused ? "#1976D2" : "#2196F3";
+        String textColor = "white";
+        return "-fx-padding: 6 14 6 14; -fx-font-size: " + (settings.getFontSize() - 3) + "; " +
+                "-fx-background-color: " + bgColor + "; -fx-text-fill: " + textColor + "; " +
+                "-fx-border-width: 0; -fx-border-radius: 3; -fx-cursor: hand; " +
                 fontWeightStyle;
     }
 

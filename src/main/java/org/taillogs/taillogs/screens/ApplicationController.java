@@ -221,7 +221,7 @@ public class ApplicationController {
             long fileSize = FileOperations.loadFileContent(logArea, currentFilePath);
             // Initialize file position to current file size so tailing starts from here
             fileThreadRef.setFilePosition(fileSize);
-            fileInfoLabel.setText("📄 " + new File(currentFilePath).getName());
+            fileInfoLabel.setText("Ready");
 
             // Start tailing with the file-specific thread ref
             FileOperations.startTailing(currentFilePath, logArea, fileThreadRef);
@@ -556,8 +556,7 @@ public class ApplicationController {
             "-fx-font-size: 8; " +
             "-fx-background-color: white; " +
             "-fx-text-fill: black; " +
-            "-fx-border-color: #333333; " +
-            "-fx-border-width: 1; " +
+            "-fx-border-width: 0; " +
             "-fx-border-radius: 0; " +
             "-fx-min-width: 20; " +
             "-fx-min-height: 18;"

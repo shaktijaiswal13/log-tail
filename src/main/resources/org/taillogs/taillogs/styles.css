@@ -26,18 +26,28 @@
 }
 
 .search-current {
-    -fx-fill: #ff0000;
+    -fx-fill: #FFD700;
     -fx-font-weight: bold;
-    -fx-font-size: 14;
 }
 
-/* Button styling to prevent scaling on hover */
+/* Button styling for modern look */
 .button {
-    -fx-padding: 3 8 3 8;
-    -fx-border-width: 1;
-    -fx-border-radius: 0;
+    -fx-padding: 6 14 6 14;
+    -fx-border-width: 0;
+    -fx-border-radius: 3;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-transition: all 0.2s ease-in-out;
 }
 
 .button:hover {
-    -fx-opacity: 0.9;
+    -fx-opacity: 0.85;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.button:pressed {
+    -fx-opacity: 0.7;
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
 }
