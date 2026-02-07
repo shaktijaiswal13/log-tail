@@ -20,6 +20,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FileOperations {
 
     public static long loadFileContent(CodeArea textArea, String filePath) {
+        return loadFileContent(textArea, filePath, null);
+    }
+
+    public static long loadFileContent(CodeArea textArea, String filePath, Runnable highlightCallback) {
         try {
             File file = new File(filePath);
             if (!file.exists()) {
@@ -40,8 +44,12 @@ public class FileOperations {
             Platform.runLater(() -> {
                 textArea.clear();
                 textArea.appendText(content.toString());
-                // Apply syntax highlighting
-                SyntaxHighlighter.applyLogLevelHighlighting(textArea);
+                // Apply highlighting
+                if (highlightCallback != null) {
+                    highlightCallback.run();
+                } else {
+                    SyntaxHighlighter.applyLogLevelHighlighting(textArea);
+                }
                 // Scroll to end
                 textArea.moveTo(textArea.getLength());
                 textArea.requestFollowCaret();
@@ -55,15 +63,19 @@ public class FileOperations {
     }
 
     public static void startTailing(String filePath, CodeArea textArea, TailThreadRef threadRef) {
+        startTailing(filePath, textArea, threadRef, null);
+    }
+
+    public static void startTailing(String filePath, CodeArea textArea, TailThreadRef threadRef, Runnable highlightCallback) {
         if (!threadRef.isActive()) {
             threadRef.setActive(true);
-            Thread tailThread = new Thread(() -> tailFile(filePath, textArea, threadRef), "TailThread");
+            Thread tailThread = new Thread(() -> tailFile(filePath, textArea, threadRef, highlightCallback), "TailThread");
             tailThread.setDaemon(true);
             tailThread.start();
         }
     }
 
-    private static void tailFile(String filePath, CodeArea textArea, TailThreadRef threadRef) {
+    private static void tailFile(String filePath, CodeArea textArea, TailThreadRef threadRef, Runnable highlightCallback) {
         try {
             File file = new File(filePath);
             // Initialize filePosition if this is the first time tailing
@@ -90,8 +102,12 @@ public class FileOperations {
                                 String content = newContent.toString();
                                 Platform.runLater(() -> {
                                     textArea.appendText(content);
-                                    // Apply syntax highlighting
-                                    SyntaxHighlighter.applyLogLevelHighlighting(textArea);
+                                    // Apply highlighting
+                                    if (highlightCallback != null) {
+                                        highlightCallback.run();
+                                    } else {
+                                        SyntaxHighlighter.applyLogLevelHighlighting(textArea);
+                                    }
                                     // Scroll to end
                                     textArea.moveTo(textArea.getLength());
                                     textArea.requestFollowCaret();
@@ -112,6 +128,10 @@ public class FileOperations {
     }
 
     public static void refreshFile(CodeArea textArea, String filePath) {
+        refreshFile(textArea, filePath, null);
+    }
+
+    public static void refreshFile(CodeArea textArea, String filePath, Runnable highlightCallback) {
         try {
             File file = new File(filePath);
             if (!file.exists()) {
@@ -132,8 +152,12 @@ public class FileOperations {
             Platform.runLater(() -> {
                 textArea.clear();
                 textArea.appendText(content.toString());
-                // Apply syntax highlighting
-                SyntaxHighlighter.applyLogLevelHighlighting(textArea);
+                // Apply highlighting
+                if (highlightCallback != null) {
+                    highlightCallback.run();
+                } else {
+                    SyntaxHighlighter.applyLogLevelHighlighting(textArea);
+                }
                 // Scroll to end
                 textArea.moveTo(textArea.getLength());
                 textArea.requestFollowCaret();

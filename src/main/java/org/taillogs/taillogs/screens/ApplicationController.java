@@ -374,6 +374,12 @@ public class ApplicationController {
 
     }
 
+    /**
+     * Create a highlighting callback that applies combined highlighting
+     */
+    private Runnable createHighlightingCallback() {
+        return () -> highlightManager.applyCombinedHighlighting(logArea);
+    }
 
     private void loadCurrentFile() {
         if (currentFilePath != null && new File(currentFilePath).exists()) {
@@ -391,13 +397,14 @@ public class ApplicationController {
             fileThreadRefs.put(currentFilePath, fileThreadRef);
 
             logArea.clear();
-            long fileSize = FileOperations.loadFileContent(logArea, currentFilePath);
+            // Use highlighting callback to apply combined highlighting after loading
+            long fileSize = FileOperations.loadFileContent(logArea, currentFilePath, createHighlightingCallback());
             // Initialize file position to current file size so tailing starts from here
             fileThreadRef.setFilePosition(fileSize);
             fileInfoLabel.setText("Ready");
 
-            // Start tailing with the file-specific thread ref
-            FileOperations.startTailing(currentFilePath, logArea, fileThreadRef);
+            // Start tailing with the file-specific thread ref and highlighting callback
+            FileOperations.startTailing(currentFilePath, logArea, fileThreadRef, createHighlightingCallback());
             statusLabel.setText("Tailing: " + new File(currentFilePath).getName());
             originalLogContent = logArea.getText();
         }
@@ -420,7 +427,8 @@ public class ApplicationController {
                 if (!fileThreadRefs.containsKey(currentFilePath)) {
                     fileThreadRefs.put(currentFilePath, new TailThreadRef());
                 }
-                FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath));
+                // Use highlighting callback when resuming tailing
+                FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
                 statusLabel.setText("Tailing...");
             }
         }
@@ -435,7 +443,8 @@ public class ApplicationController {
     @FXML
     protected void onRefresh() {
         if (currentFilePath != null && new File(currentFilePath).exists()) {
-            FileOperations.refreshFile(logArea, currentFilePath);
+            // Use highlighting callback when refreshing
+            FileOperations.refreshFile(logArea, currentFilePath, createHighlightingCallback());
             statusLabel.setText("Refreshed");
             originalLogContent = logArea.getText();
         }
@@ -484,7 +493,7 @@ public class ApplicationController {
                         // Only resume if user hasn't manually changed state
                         if (fileThreadRefs.containsKey(currentFilePath)) {
                             fileThreadRefs.get(currentFilePath).setActive(true);
-                            FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath));
+                            FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
                             pauseMode = false;
                             pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
                             statusLabel.setText("Tailing...");
@@ -561,7 +570,7 @@ public class ApplicationController {
                             // Only resume if user hasn't manually changed state
                             if (fileThreadRefs.containsKey(currentFilePath)) {
                                 fileThreadRefs.get(currentFilePath).setActive(true);
-                                FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath));
+                                FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
                                 pauseMode = false;
                                 pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
                                 statusLabel.setText("Tailing...");
@@ -614,8 +623,8 @@ public class ApplicationController {
         if (logArea.getText().isEmpty()) {
             return;
         }
-        // Reapply syntax highlighting without search highlighting
-        SyntaxHighlighter.applyLogLevelHighlighting(logArea);
+        // Reapply combined highlighting (log levels + custom patterns) when search is cleared
+        highlightManager.applyCombinedHighlighting(logArea);
     }
 
     // Setter for onBack callback
@@ -780,7 +789,7 @@ public class ApplicationController {
         fileName.setStyle("-fx-font-size: " + tabFontSize + "; -fx-text-fill: #333333; " + tabFontWeightStyle);
 
         // Close button
-        Button closeTab = new Button("✕");
+        Button closeTab = new Button("\u2715");
         closeTab.setStyle(
             "-fx-padding: 2 4 2 4; " +
             "-fx-font-size: 8; " +

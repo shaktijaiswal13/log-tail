@@ -9,15 +9,24 @@ import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.taillogs.taillogs.config.PreferencesManager;
 import org.taillogs.taillogs.models.HighlightPattern;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HighlightManager {
     private final ObservableList<HighlightPattern> patterns;
+    private static final String CSS_FILE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "taillogs_highlights.css";
+    private Set<String> loadedStylesheets = new HashSet<>();
 
     public HighlightManager() {
         this.patterns = FXCollections.observableArrayList();
@@ -101,7 +110,6 @@ public class HighlightManager {
      */
     private StyleSpans<Collection<String>> applyCustomPatternsHighlighting(
             String text, StyleSpans<Collection<String>> baseSpans) {
-        StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
 
         List<Pattern> compiledPatterns = new ArrayList<>();
         List<String> patternColors = new ArrayList<>();
@@ -113,13 +121,18 @@ public class HighlightManager {
                     if (hp.isRegex()) {
                         compiledPatterns.add(Pattern.compile(hp.getPattern()));
                     } else {
-                        compiledPatterns.add(Pattern.compile(Pattern.quote(hp.getPattern())));
+                        compiledPatterns.add(Pattern.compile(Pattern.quote(hp.getPattern()), Pattern.CASE_INSENSITIVE));
                     }
                     patternColors.add(hp.getColor());
                 } catch (Exception e) {
                     System.err.println("Invalid pattern: " + hp.getPattern());
                 }
             }
+        }
+
+        // If no custom patterns, return base spans
+        if (compiledPatterns.isEmpty()) {
+            return baseSpans;
         }
 
         // Track which positions are covered by custom highlights
@@ -158,50 +171,35 @@ public class HighlightManager {
             }
         }
 
-        // Build result with custom highlights overriding base styles
-        int lastEnd = 0;
-        for (Match match : mergedMatches) {
-            // Add base span before match
-            if (match.start > lastEnd) {
-                int spanStart = lastEnd;
-                int spanEnd = match.start;
-                int spanLength = spanEnd - spanStart;
+        // If no matches, return base spans
+        if (mergedMatches.isEmpty()) {
+            return baseSpans;
+        }
 
-                for (int i = spanStart; i < spanEnd; i++) {
-                    int pos = i - lastEnd;
-                    if (pos == 0) {
-                        Collection<String> baseStyle = getBaseStyleAt(baseSpans, spanStart);
-                        builder.add(baseStyle, 1);
-                    } else {
-                        Collection<String> baseStyle = getBaseStyleAt(baseSpans, i);
-                        builder.add(baseStyle, 1);
-                    }
-                }
+        // Build result with custom highlights overriding base styles
+        StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
+        int lastEnd = 0;
+
+        for (Match match : mergedMatches) {
+            // Add base span content before this match
+            if (match.start > lastEnd) {
+                // For simplicity, add unstyled content before the match
+                // (log level highlighting will still be visible through base CSS)
+                builder.add(Collections.emptyList(), match.start - lastEnd);
             }
 
-            // Add custom highlight
-            builder.add(Collections.singleton("custom-" + match.color.substring(1)), match.end - match.start);
+            // Add custom highlight using a CSS class based on color
+            String colorClass = "highlight-" + match.color.substring(1).toLowerCase();
+            builder.add(Collections.singleton(colorClass), match.end - match.start);
             lastEnd = match.end;
         }
 
-        // Add remaining base span
+        // Add remaining content
         if (lastEnd < text.length()) {
-            for (int i = lastEnd; i < text.length(); i++) {
-                Collection<String> baseStyle = getBaseStyleAt(baseSpans, i);
-                builder.add(baseStyle, 1);
-            }
+            builder.add(Collections.emptyList(), text.length() - lastEnd);
         }
 
         return builder.create();
-    }
-
-    /**
-     * Get style at specific position in base spans
-     */
-    private Collection<String> getBaseStyleAt(StyleSpans<Collection<String>> spans, int position) {
-        // StyleSpans provides style at position through iteration
-        // For now, return empty collection as fallback
-        return Collections.emptyList();
     }
 
     public void applyCombinedHighlighting(CodeArea codeArea) {
@@ -210,31 +208,44 @@ public class HighlightManager {
             return;
         }
 
-        // Ensure custom style classes are injected into CodeArea's stylesheet
-        ensureStylesLoaded(codeArea);
+        // Ensure custom style classes are available in CodeArea's stylesheet
+        updateCustomStylesheet(codeArea);
 
         StyleSpans<Collection<String>> combined = buildCombinedHighlighting(text);
         codeArea.setStyleSpans(0, combined);
     }
 
     /**
-     * Ensure custom highlight colors are available in CodeArea's stylesheet
+     * Update the custom stylesheet with current highlight patterns
      */
-    private void ensureStylesLoaded(CodeArea codeArea) {
-        // Generate CSS for all enabled custom patterns
-        StringBuilder customCss = new StringBuilder();
-        for (HighlightPattern pattern : patterns) {
-            if (pattern.isEnabled()) {
-                String className = "custom-" + pattern.getColor().substring(1);
-                customCss.append(".").append(className).append(" { -fx-fill: ").append(pattern.getColor()).append("; }\n");
+    private void updateCustomStylesheet(CodeArea codeArea) {
+        try {
+            // Generate CSS content for all patterns
+            StringBuilder css = new StringBuilder();
+            css.append("/* Auto-generated highlight styles */\n");
+            
+            for (HighlightPattern pattern : patterns) {
+                if (pattern.isEnabled() && pattern.getColor() != null) {
+                    String colorClass = "highlight-" + pattern.getColor().substring(1).toLowerCase();
+                    css.append(".").append(colorClass).append(" {\n");
+                    css.append("    -fx-fill: ").append(pattern.getColor()).append(";\n");
+                    css.append("    -fx-font-weight: bold;\n");
+                    css.append("}\n");
+                }
             }
-        }
 
-        if (customCss.length() > 0) {
-            String stylesheet = customCss.toString();
-            if (!codeArea.getStylesheets().contains(stylesheet)) {
-                codeArea.setStyle(codeArea.getStyle() + "\n" + stylesheet);
+            // Write CSS to temp file
+            Path cssPath = Path.of(CSS_FILE_PATH);
+            Files.writeString(cssPath, css.toString());
+
+            // Add stylesheet if not already added
+            String cssUri = cssPath.toUri().toString();
+            if (!codeArea.getStylesheets().contains(cssUri)) {
+                codeArea.getStylesheets().add(cssUri);
             }
+
+        } catch (IOException e) {
+            System.err.println("Failed to create highlight stylesheet: " + e.getMessage());
         }
     }
 
