@@ -181,7 +181,13 @@ public class ApplicationController {
 
     private void setupRightPanel() {
         try {
-            FXMLLoader loader = new FXMLLoader(RightPanelController.class.getResource("right-panel-view.fxml"));
+            FXMLLoader loader = new FXMLLoader();
+            java.net.URL fxmlUrl = ApplicationController.class.getResource("right-panel-view.fxml");
+            if (fxmlUrl == null) {
+                System.err.println("ERROR: right-panel-view.fxml not found");
+                return;
+            }
+            loader.setLocation(fxmlUrl);
             VBox rightPanelContent = loader.load();
             rightPanelController = loader.getController();
             rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
