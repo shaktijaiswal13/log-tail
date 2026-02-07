@@ -37,15 +37,15 @@
 
                 <!-- Right Controls -->
                 <Region HBox.hgrow="ALWAYS"/>
-                <HBox spacing="8.0">
-                    <Button fx:id="pauseBtn" text="Tail" minWidth="60" minHeight="28"
-                            style="-fx-padding: 6 14 6 14; -fx-font-size: 10; -fx-background-color: #2196F3; -fx-text-fill: white; -fx-border-width: 0; -fx-border-radius: 3; -fx-font-weight: bold; -fx-cursor: hand;"
+                <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                    <Button fx:id="pauseBtn" text="Tail" minWidth="80" minHeight="32"
+                            styleClass="action-button tail-button"
                             onAction="#onTogglePause"/>
-                    <Button fx:id="clearBtn" text="✕ Clear" minWidth="65" minHeight="28"
-                            style="-fx-padding: 6 14 6 14; -fx-font-size: 10; -fx-background-color: #f44336; -fx-text-fill: white; -fx-border-width: 0; -fx-border-radius: 3; -fx-font-weight: bold; -fx-cursor: hand;"
+                    <Button fx:id="clearBtn" text="Clear" minWidth="80" minHeight="32"
+                            styleClass="action-button clear-button"
                             onAction="#onClear"/>
-                    <Button fx:id="refreshBtn" text="🔄 Refresh" minWidth="75" minHeight="28"
-                            style="-fx-padding: 6 14 6 14; -fx-font-size: 10; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-width: 0; -fx-border-radius: 3; -fx-font-weight: bold; -fx-cursor: hand;"
+                    <Button fx:id="refreshBtn" text="Refresh" minWidth="90" minHeight="32"
+                            styleClass="action-button refresh-button"
                             onAction="#onRefresh"/>
                 </HBox>
             </HBox>

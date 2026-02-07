@@ -161,9 +161,51 @@ public class ApplicationController {
     }
 
     private void updateButtonStyles() {
-        pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, pauseMode));
-        clearBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
-        refreshBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
+        // Update visual state for tail button - gray when tailing is active (not paused)
+        if (Platform.isFxApplicationThread()) {
+            updateButtonState();
+        } else {
+            Platform.runLater(this::updateButtonState);
+        }
+    }
+    
+    // Direct update method that can be called from JavaFX thread
+    private void updateButtonStateDirect() {
+        updateButtonState();
+    }
+    
+    private void updateButtonState() {
+        if (!pauseMode) {
+            // Tailing is active, make button classic medium grey
+            pauseBtn.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #C0C0C0, #A8A8A8); " +
+                "-fx-border-color: #909090; " +
+                "-fx-text-fill: #333333; " +
+                "-fx-padding: 8 18 8 18; " +
+                "-fx-font-size: 11px; " +
+                "-fx-font-weight: 600; " +
+                "-fx-border-width: 1px; " +
+                "-fx-background-radius: 6px; " +
+                "-fx-border-radius: 6px; " +
+                "-fx-cursor: hand; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 4, 0, 0, 2);"
+            );
+        } else {
+            // Tailing is paused, show classic light grey
+            pauseBtn.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #F5F5F5, #E8E8E8); " +
+                "-fx-text-fill: #666666; " +
+                "-fx-border-color: #CCCCCC; " +
+                "-fx-padding: 8 18 8 18; " +
+                "-fx-font-size: 11px; " +
+                "-fx-font-weight: 600; " +
+                "-fx-border-width: 1px; " +
+                "-fx-background-radius: 6px; " +
+                "-fx-border-radius: 6px; " +
+                "-fx-cursor: hand; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 3, 0, 0, 1);"
+            );
+        }
     }
 
     private void setupUI() {
@@ -429,7 +471,12 @@ public class ApplicationController {
             fileInfoLabel.setText("Ready");
 
             // Start tailing with the file-specific thread ref and highlighting callback
+            pauseMode = false; // Ensure tailing is active
             FileOperations.startTailing(currentFilePath, logArea, fileThreadRef, createHighlightingCallback());
+            // Update button state on JavaFX thread
+            Platform.runLater(() -> {
+                updateButtonStyles(); // Update button to show gray (active state)
+            });
             statusLabel.setText("Tailing: " + new File(currentFilePath).getName());
             originalLogContent = logArea.getText();
         }
@@ -443,10 +490,10 @@ public class ApplicationController {
             if (fileThreadRefs.containsKey(currentFilePath)) {
                 fileThreadRefs.get(currentFilePath).setActive(false);
             }
-            pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, true));
+            updateButtonState(); // Direct call since we're on JavaFX thread
             statusLabel.setText("Paused");
         } else {
-            pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
+            updateButtonState(); // Direct call since we're on JavaFX thread
             if (currentFilePath != null) {
                 // Create new thread ref if needed
                 if (!fileThreadRefs.containsKey(currentFilePath)) {
@@ -495,7 +542,7 @@ public class ApplicationController {
             if (wasAutoTailingBeforeSearch) {
                 fileThreadRefs.get(currentFilePath).setActive(false);
                 pauseMode = true;
-                pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, true));
+                updateButtonStyles();
                 statusLabel.setText("Paused for search...");
             }
         }
@@ -520,7 +567,7 @@ public class ApplicationController {
                             fileThreadRefs.get(currentFilePath).setActive(true);
                             FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
                             pauseMode = false;
-                            pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
+                            updateButtonStyles();
                             statusLabel.setText("Tailing...");
                         }
                     }
@@ -571,7 +618,7 @@ public class ApplicationController {
                 if (wasAutoTailingBeforeSearch) {
                     fileThreadRefs.get(currentFilePath).setActive(false);
                     pauseMode = true;
-                    pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, true));
+                    updateButtonStyles();
                 }
             }
 
@@ -597,7 +644,7 @@ public class ApplicationController {
                                 fileThreadRefs.get(currentFilePath).setActive(true);
                                 FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
                                 pauseMode = false;
-                                pauseBtn.setStyle(FontStylesUtil.getButtonStyle(appearanceSettings, false));
+                                updateButtonStyles();
                                 statusLabel.setText("Tailing...");
                             }
                         }
@@ -859,7 +906,7 @@ public class ApplicationController {
                 currentFilePath = filePath;
                 tailThreadRef.setActive(false);
                 pauseMode = false;
-                pauseBtn.setStyle("-fx-padding: 3 8 3 8; -fx-font-size: 9; -fx-background-color: #e0e0e0; -fx-text-fill: black; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 0;");
+                updateButtonStyles();
                 loadCurrentFile();
                 updateTabBar();
             }
