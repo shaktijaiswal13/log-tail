@@ -133,7 +133,9 @@ public class ApplicationController {
         applyAppearanceSettings(appearanceSettings);
 
         // Setup right panel immediately (not deferred)
+        System.out.println("About to call setupRightPanel()...");
         setupRightPanel();
+        System.out.println("setupRightPanel() completed");
     }
 
     public void applyAppearanceSettings(AppearanceSettings settings) {
@@ -185,28 +187,29 @@ public class ApplicationController {
     }
 
     private void setupRightPanel() {
-        System.out.println("setupRightPanel() called");
+        System.out.println("=== setupRightPanel() called ===");
 
         if (rightPanelContainer == null) {
             System.err.println("ERROR: rightPanelContainer is null!");
             return;
         }
 
-        // Clear the container (remove test label)
+        System.out.println("rightPanelContainer is valid, clearing children...");
         rightPanelContainer.getChildren().clear();
 
         try {
-            // Try to load from FXML first
+            System.out.println("Creating RightPanelController...");
             rightPanelController = new RightPanelController();
+            System.out.println("Setting managers...");
             rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
 
-            // Create the UI programmatically
+            System.out.println("Creating TabPane...");
             TabPane tabPane = new TabPane();
             tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
             tabPane.setPrefWidth(320);
             VBox.setVgrow(tabPane, Priority.ALWAYS);
 
-            // Highlights Tab
+            System.out.println("Creating Highlights Tab...");
             VBox highlightsContent = new VBox(8);
             highlightsContent.setStyle("-fx-padding: 8;");
             Button addHighlightBtn = new Button("+ Add Highlight Pattern");
@@ -216,8 +219,9 @@ public class ApplicationController {
             highlightsContent.getChildren().addAll(addHighlightBtn, new Separator(), highlightsListView);
             Tab highlightsTab = new Tab("Highlights", highlightsContent);
             highlightsTab.setClosable(false);
+            System.out.println("Highlights Tab created");
 
-            // Filters Tab
+            System.out.println("Creating Filters Tab...");
             VBox filtersContent = new VBox(8);
             filtersContent.setStyle("-fx-padding: 8;");
             Button addFilterBtn = new Button("+ Add Filter");
@@ -228,8 +232,9 @@ public class ApplicationController {
             filtersContent.getChildren().addAll(addFilterBtn, new Separator(), filtersListView, clearFiltersBtn);
             Tab filtersTab = new Tab("Filters", filtersContent);
             filtersTab.setClosable(false);
+            System.out.println("Filters Tab created");
 
-            // Bookmarks Tab
+            System.out.println("Creating Bookmarks Tab...");
             VBox bookmarksContent = new VBox(8);
             bookmarksContent.setStyle("-fx-padding: 8;");
             Label instructionsLabel = new Label("Click line numbers to bookmark");
@@ -242,18 +247,21 @@ public class ApplicationController {
             bookmarksContent.getChildren().addAll(instructionsLabel, new Separator(), bookmarksListView, clearBookmarksBtn);
             Tab bookmarksTab = new Tab("Bookmarks", bookmarksContent);
             bookmarksTab.setClosable(false);
+            System.out.println("Bookmarks Tab created");
 
-            // Add tabs to TabPane
+            System.out.println("Adding tabs to TabPane...");
             tabPane.getTabs().addAll(highlightsTab, filtersTab, bookmarksTab);
+            System.out.println("Tabs added: " + tabPane.getTabs().size());
 
-            // Add TabPane to container
+            System.out.println("Adding TabPane to rightPanelContainer...");
             rightPanelContainer.getChildren().add(tabPane);
             VBox.setVgrow(tabPane, Priority.ALWAYS);
+            System.out.println("Container children: " + rightPanelContainer.getChildren().size());
 
-            System.out.println("Right panel created successfully with 3 tabs");
+            System.out.println("=== Right panel created successfully with 3 tabs ===");
 
         } catch (Exception e) {
-            System.err.println("Error creating right panel: " + e.getMessage());
+            System.err.println("ERROR creating right panel: " + e.getMessage());
             e.printStackTrace();
         }
     }
