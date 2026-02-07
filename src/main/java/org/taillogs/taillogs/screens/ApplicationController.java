@@ -181,7 +181,8 @@ public class ApplicationController {
 
     private void setupRightPanel() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("right-panel-view.fxml"));
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("right-panel-view.fxml"));
             VBox rightPanelContent = loader.load();
             rightPanelController = loader.getController();
             rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
@@ -194,6 +195,7 @@ public class ApplicationController {
             VBox.setVgrow(rightPanelContent, Priority.ALWAYS);
         } catch (IOException e) {
             System.err.println("Failed to load right panel: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
