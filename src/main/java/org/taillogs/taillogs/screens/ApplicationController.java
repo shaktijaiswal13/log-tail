@@ -127,8 +127,8 @@ public class ApplicationController {
         setupUI();
         applyAppearanceSettings(appearanceSettings);
 
-        // Setup right panel after UI is ready
-        Platform.runLater(this::setupRightPanel);
+        // Setup right panel immediately (not deferred)
+        setupRightPanel();
     }
 
     public void applyAppearanceSettings(AppearanceSettings settings) {
@@ -184,10 +184,14 @@ public class ApplicationController {
 
         if (rightPanelContainer == null) {
             System.err.println("ERROR: rightPanelContainer is null!");
+            // Try to find it
+            System.err.println("Attempting to diagnose null container...");
             return;
         }
 
         System.out.println("rightPanelContainer found: " + rightPanelContainer);
+        System.out.println("rightPanelContainer size: " + rightPanelContainer.getPrefWidth() + "x" + rightPanelContainer.getPrefHeight());
+        System.out.println("rightPanelContainer visible: " + rightPanelContainer.isVisible());
 
         try {
             FXMLLoader loader = new FXMLLoader();
