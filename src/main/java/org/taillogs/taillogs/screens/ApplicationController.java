@@ -186,6 +186,7 @@ public class ApplicationController {
         updateButtonStyles();
     }
 
+
     private void setupRightPanel() {
         System.out.println("=== setupRightPanel() called ===");
 
@@ -200,69 +201,127 @@ public class ApplicationController {
         try {
             System.out.println("Creating RightPanelController...");
             rightPanelController = new RightPanelController();
-            System.out.println("Setting managers...");
-            rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
 
             System.out.println("Creating TabPane...");
             TabPane tabPane = new TabPane();
             tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
             tabPane.setPrefWidth(320);
+            tabPane.setMinHeight(200);
+            tabPane.setStyle("-fx-background-color: #f5f5f5;");
             VBox.setVgrow(tabPane, Priority.ALWAYS);
 
+            // ===== HIGHLIGHTS TAB =====
             System.out.println("Creating Highlights Tab...");
             VBox highlightsContent = new VBox(8);
-            highlightsContent.setStyle("-fx-padding: 8;");
+            highlightsContent.setStyle("-fx-padding: 8; -fx-background-color: #ffffff;");
+            VBox.setVgrow(highlightsContent, Priority.ALWAYS);
+            
             Button addHighlightBtn = new Button("+ Add Highlight Pattern");
+            addHighlightBtn.setMaxWidth(Double.MAX_VALUE);
+            addHighlightBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;");
+            
             ListView<HighlightPattern> highlightsListView = new ListView<>(highlightManager.getPatterns());
-            highlightsListView.setPrefHeight(300);
+            highlightsListView.setMinHeight(100);
+            highlightsListView.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            highlightsListView.setPlaceholder(new Label("No highlight patterns defined.\nClick the button above to add one."));
             VBox.setVgrow(highlightsListView, Priority.ALWAYS);
+            
             highlightsContent.getChildren().addAll(addHighlightBtn, new Separator(), highlightsListView);
             Tab highlightsTab = new Tab("Highlights", highlightsContent);
             highlightsTab.setClosable(false);
-            System.out.println("Highlights Tab created");
 
+            // ===== FILTERS TAB =====
             System.out.println("Creating Filters Tab...");
             VBox filtersContent = new VBox(8);
-            filtersContent.setStyle("-fx-padding: 8;");
+            filtersContent.setStyle("-fx-padding: 8; -fx-background-color: #ffffff;");
+            VBox.setVgrow(filtersContent, Priority.ALWAYS);
+            
             Button addFilterBtn = new Button("+ Add Filter");
+            addFilterBtn.setMaxWidth(Double.MAX_VALUE);
+            addFilterBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;");
+            
             ListView<FilterRule> filtersListView = new ListView<>(filterManager.getRules());
-            filtersListView.setPrefHeight(300);
+            filtersListView.setMinHeight(100);
+            filtersListView.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            filtersListView.setPlaceholder(new Label("No filter rules defined.\nClick the button above to add one."));
             VBox.setVgrow(filtersListView, Priority.ALWAYS);
+            
             Button clearFiltersBtn = new Button("Clear All Filters");
+            clearFiltersBtn.setMaxWidth(Double.MAX_VALUE);
+            clearFiltersBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 6 12;");
+            
             filtersContent.getChildren().addAll(addFilterBtn, new Separator(), filtersListView, clearFiltersBtn);
             Tab filtersTab = new Tab("Filters", filtersContent);
             filtersTab.setClosable(false);
-            System.out.println("Filters Tab created");
 
+            // ===== BOOKMARKS TAB =====
             System.out.println("Creating Bookmarks Tab...");
             VBox bookmarksContent = new VBox(8);
-            bookmarksContent.setStyle("-fx-padding: 8;");
+            bookmarksContent.setStyle("-fx-padding: 8; -fx-background-color: #ffffff;");
+            VBox.setVgrow(bookmarksContent, Priority.ALWAYS);
+            
             Label instructionsLabel = new Label("Click line numbers to bookmark");
             instructionsLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 10;");
             instructionsLabel.setWrapText(true);
+            
             ListView<Bookmark> bookmarksListView = new ListView<>(bookmarkManager.getBookmarks());
-            bookmarksListView.setPrefHeight(300);
+            bookmarksListView.setMinHeight(100);
+            bookmarksListView.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            bookmarksListView.setPlaceholder(new Label("No bookmarks yet.\nClick on line numbers to add bookmarks."));
             VBox.setVgrow(bookmarksListView, Priority.ALWAYS);
+            
             Button clearBookmarksBtn = new Button("Clear All Bookmarks");
+            clearBookmarksBtn.setMaxWidth(Double.MAX_VALUE);
+            clearBookmarksBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 6 12;");
+            
             bookmarksContent.getChildren().addAll(instructionsLabel, new Separator(), bookmarksListView, clearBookmarksBtn);
             Tab bookmarksTab = new Tab("Bookmarks", bookmarksContent);
             bookmarksTab.setClosable(false);
-            System.out.println("Bookmarks Tab created");
 
+            // Add all tabs to TabPane
             System.out.println("Adding tabs to TabPane...");
             tabPane.getTabs().addAll(highlightsTab, filtersTab, bookmarksTab);
             System.out.println("Tabs added: " + tabPane.getTabs().size());
 
+            // Wire UI components to the RightPanelController
+            System.out.println("Wiring components to RightPanelController...");
+            rightPanelController.tabPane = tabPane;
+            rightPanelController.addHighlightBtn = addHighlightBtn;
+            rightPanelController.highlightsListView = highlightsListView;
+            rightPanelController.addFilterBtn = addFilterBtn;
+            rightPanelController.filtersListView = filtersListView;
+            rightPanelController.clearFiltersBtn = clearFiltersBtn;
+            rightPanelController.bookmarksListView = bookmarksListView;
+            rightPanelController.clearBookmarksBtn = clearBookmarksBtn;
+
+            // Set managers and initialize the controller
+            System.out.println("Setting managers and initializing controller...");
+            rightPanelController.setManagers(highlightManager, filterManager, bookmarkManager);
+            rightPanelController.initialize();
+
+            // Set callbacks for when highlights/filters change
+            rightPanelController.setOnHighlightsChanged(this::reapplyHighlighting);
+            rightPanelController.setOnFiltersChanged(this::applyFilteringToContent);
+
+            // Add TabPane to the container
             System.out.println("Adding TabPane to rightPanelContainer...");
             rightPanelContainer.getChildren().add(tabPane);
-            VBox.setVgrow(tabPane, Priority.ALWAYS);
-            System.out.println("Container children: " + rightPanelContainer.getChildren().size());
+            System.out.println("Container children count: " + rightPanelContainer.getChildren().size());
+
+            // Force layout update
+            rightPanelContainer.requestLayout();
 
             System.out.println("=== Right panel created successfully with 3 tabs ===");
 
         } catch (Exception e) {
             System.err.println("ERROR creating right panel: " + e.getMessage());
             e.printStackTrace();
+            
+            // Fallback: show error message in the panel
+            Label errorLabel = new Label("Error loading right panel:\n" + e.getMessage());
+            errorLabel.setStyle("-fx-text-fill: red; -fx-padding: 10;");
+            errorLabel.setWrapText(true);
+            rightPanelContainer.getChildren().add(errorLabel);
         }
     }
 
