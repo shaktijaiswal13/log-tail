@@ -5,6 +5,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxListCell;
 import javafx.scene.input.MouseButton;
+import javafx.scene.Cursor;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -124,7 +125,8 @@ public class RightPanelController {
                     // Delete button
                     Button deleteBtn = new Button("x");
                     deleteBtn.setPrefWidth(30);
-                    deleteBtn.setStyle("-fx-font-size: 14;");
+                    deleteBtn.setStyle("-fx-font-size: 14; -fx-cursor: hand;");
+                    deleteBtn.setCursor(Cursor.HAND);
                     deleteBtn.setOnAction(e -> {
                         System.out.println("[RightPanelController] Deleting pattern: " + pattern.getPattern());
                         highlightManager.removePattern(pattern.getId());
@@ -242,7 +244,8 @@ public class RightPanelController {
                     // Delete button
                     Button deleteBtn = new Button("x");
                     deleteBtn.setPrefWidth(30);
-                    deleteBtn.setStyle("-fx-font-size: 14;");
+                    deleteBtn.setStyle("-fx-font-size: 14; -fx-cursor: hand;");
+                    deleteBtn.setCursor(Cursor.HAND);
                     deleteBtn.setOnAction(e -> {
                         filterManager.removeRule(rule.getId());
                         if (onFiltersChanged != null) onFiltersChanged.run();
@@ -324,14 +327,16 @@ public class RightPanelController {
 
                     Button goBtn = new Button("Go");
                     goBtn.setPrefWidth(40);
-                    goBtn.setStyle("-fx-font-size: 10;");
+                    goBtn.setStyle("-fx-font-size: 10; -fx-cursor: hand;");
+                    goBtn.setCursor(Cursor.HAND);
                     goBtn.setOnAction(e -> {
                         // Navigate to bookmark (to be implemented by ApplicationController)
                     });
 
                     Button deleteBtn = new Button("x");
                     deleteBtn.setPrefWidth(30);
-                    deleteBtn.setStyle("-fx-font-size: 12;");
+                    deleteBtn.setStyle("-fx-font-size: 12; -fx-cursor: hand;");
+                    deleteBtn.setCursor(Cursor.HAND);
                     deleteBtn.setOnAction(e -> bookmarkManager.removeBookmark(bookmark.getId()));
 
                     actionBox.getChildren().addAll(goBtn, deleteBtn);

@@ -40,12 +40,15 @@
                 <HBox spacing="10.0" alignment="CENTER_RIGHT">
                     <Button fx:id="pauseBtn" text="Tail" minWidth="80" minHeight="32"
                             styleClass="action-button tail-button"
+                            style="-fx-cursor: hand;"
                             onAction="#onTogglePause"/>
                     <Button fx:id="clearBtn" text="Clear" minWidth="80" minHeight="32"
                             styleClass="action-button clear-button"
+                            style="-fx-cursor: hand;"
                             onAction="#onClear"/>
                     <Button fx:id="refreshBtn" text="Refresh" minWidth="90" minHeight="32"
                             styleClass="action-button refresh-button"
+                            style="-fx-cursor: hand;"
                             onAction="#onRefresh"/>
                 </HBox>
             </HBox>
@@ -62,7 +65,7 @@
             <HBox spacing="8.0" style="-fx-background-color: #ffffff; -fx-padding: 10 12 10 12; -fx-border-color: #eeeeee; -fx-border-width: 0 0 1 0;">
                 <Label text="🔍" style="-fx-font-size: 11; -fx-text-fill: #666666;"/>
                 <TextField fx:id="searchField" HBox.hgrow="ALWAYS"
-                           style="-fx-font-size: 10; -fx-padding: 5; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-background-color: #f5f5f5;"
+                           style="-fx-font-size: 10; -fx-padding: 5; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-background-color: #f5f5f5; -fx-cursor: text;"
                            promptText="Search log content..."/>
             </HBox>
 

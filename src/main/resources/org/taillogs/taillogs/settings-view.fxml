@@ -40,9 +40,9 @@
     <!-- Button Bar -->
     <HBox spacing="10" style="-fx-padding: 10 0 0 0; -fx-alignment: CENTER_RIGHT;">
         <Button fx:id="okBtn" text="OK" minWidth="80"
-                style="-fx-padding: 8 20 8 20; -fx-font-size: 11;"/>
+                style="-fx-padding: 8 20 8 20; -fx-font-size: 11; -fx-cursor: hand;"/>
         <Button fx:id="cancelBtn" text="Cancel" minWidth="80"
-                style="-fx-padding: 8 20 8 20; -fx-font-size: 11;"/>
+                style="-fx-padding: 8 20 8 20; -fx-font-size: 11; -fx-cursor: hand;"/>
     </HBox>
 
 </VBox>

@@ -1,9 +1,24 @@
+/* Global Button Cursor Style */
+.button {
+    -fx-cursor: hand;
+}
+
+/* Global Text Input Cursor Style */
+.text-field {
+    -fx-cursor: text;
+}
+
+.text-area {
+    -fx-cursor: text;
+}
+
 .code-area {
     -fx-background-color: #ffffff;
     -fx-text-fill: #000000;
     -fx-font-family: 'Consolas', 'Courier New', monospace;
     -fx-font-size: 13;
     -fx-padding: 5;
+    -fx-cursor: text;
 }
 
 .error {

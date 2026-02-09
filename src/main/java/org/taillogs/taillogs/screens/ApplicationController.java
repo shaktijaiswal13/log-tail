@@ -212,6 +212,9 @@ public class ApplicationController {
         logArea.setWrapText(false);
         logArea.setEditable(false);
 
+        // Set text selection cursor for CodeArea
+        logArea.setCursor(Cursor.TEXT);
+
         // Configure scrollbars to always be visible
         String scrollbarCSS = "-fx-control-inner-background: #ffffff; " +
                              "-fx-padding: 0; " +
@@ -260,7 +263,8 @@ public class ApplicationController {
             
             Button addHighlightBtn = new Button("+ Add Highlight Pattern");
             addHighlightBtn.setMaxWidth(Double.MAX_VALUE);
-            addHighlightBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;");
+            addHighlightBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-cursor: hand;");
+            addHighlightBtn.setCursor(Cursor.HAND);
             
             ListView<HighlightPattern> highlightsListView = new ListView<>(highlightManager.getPatterns());
             highlightsListView.setMinHeight(100);
@@ -280,7 +284,8 @@ public class ApplicationController {
             
             Button addFilterBtn = new Button("+ Add Filter");
             addFilterBtn.setMaxWidth(Double.MAX_VALUE);
-            addFilterBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;");
+            addFilterBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-cursor: hand;");
+            addFilterBtn.setCursor(Cursor.HAND);
             
             ListView<FilterRule> filtersListView = new ListView<>(filterManager.getRules());
             filtersListView.setMinHeight(100);
@@ -290,7 +295,8 @@ public class ApplicationController {
             
             Button clearFiltersBtn = new Button("Clear All Filters");
             clearFiltersBtn.setMaxWidth(Double.MAX_VALUE);
-            clearFiltersBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 6 12;");
+            clearFiltersBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 6 12; -fx-cursor: hand;");
+            clearFiltersBtn.setCursor(Cursor.HAND);
             
             filtersContent.getChildren().addAll(addFilterBtn, new Separator(), filtersListView, clearFiltersBtn);
             Tab filtersTab = new Tab("Filters", filtersContent);
@@ -314,7 +320,8 @@ public class ApplicationController {
             
             Button clearBookmarksBtn = new Button("Clear All Bookmarks");
             clearBookmarksBtn.setMaxWidth(Double.MAX_VALUE);
-            clearBookmarksBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 6 12;");
+            clearBookmarksBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 6 12; -fx-cursor: hand;");
+            clearBookmarksBtn.setCursor(Cursor.HAND);
             
             bookmarksContent.getChildren().addAll(instructionsLabel, new Separator(), bookmarksListView, clearBookmarksBtn);
             Tab bookmarksTab = new Tab("Bookmarks", bookmarksContent);
@@ -891,9 +898,10 @@ public class ApplicationController {
             "-fx-background-color: #e8e8e8; " +
             "-fx-border-color: #cccccc; " +
             "-fx-border-width: 0 1 1 0; " +
-            "-fx-alignment: CENTER_LEFT;"
+            "-fx-alignment: CENTER_LEFT; " +
+            "-fx-cursor: hand;"
         );
-        tab.setCursor(javafx.scene.Cursor.HAND);
+        tab.setCursor(Cursor.HAND);
 
         // File name label
         Label fileName = new Label(new File(filePath).getName());
@@ -911,8 +919,10 @@ public class ApplicationController {
             "-fx-border-width: 0; " +
             "-fx-border-radius: 0; " +
             "-fx-min-width: 20; " +
-            "-fx-min-height: 18;"
+            "-fx-min-height: 18; " +
+            "-fx-cursor: hand;"
         );
+        closeTab.setCursor(Cursor.HAND);
 
         closeTab.setOnAction(event -> closeFile(filePath));
 

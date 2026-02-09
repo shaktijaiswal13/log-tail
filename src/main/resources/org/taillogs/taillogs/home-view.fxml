@@ -30,13 +30,13 @@
             <VBox alignment="CENTER" spacing="15.0">
                 <!-- Open File Button -->
                 <Button fx:id="openFileBtn" text="📁 Open File"
-                        style="-fx-padding: 12 25 12 25; -fx-font-size: 16; -fx-font-weight: bold; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 0;"
+                        style="-fx-padding: 12 25 12 25; -fx-font-size: 16; -fx-font-weight: bold; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-border-radius: 0; -fx-cursor: hand;"
                         minWidth="300" minHeight="50"
                         onAction="#onOpenFile"/>
 
                 <!-- Open Folder Button -->
                 <Button fx:id="openFolderBtn" text="📂 Open Folder"
-                        style="-fx-padding: 12 25 12 25; -fx-font-size: 16; -fx-font-weight: bold; -fx-background-color: #2196F3; -fx-text-fill: white; -fx-border-radius: 0;"
+                        style="-fx-padding: 12 25 12 25; -fx-font-size: 16; -fx-font-weight: bold; -fx-background-color: #2196F3; -fx-text-fill: white; -fx-border-radius: 0; -fx-cursor: hand;"
                         minWidth="300" minHeight="50"
                         onAction="#onOpenFolder"/>
             </VBox>
@@ -46,7 +46,7 @@
 
             <!-- Enter Application Button -->
             <Button fx:id="enterAppBtn" text="→ Enter Application"
-                    style="-fx-padding: 8 20 8 20; -fx-font-size: 10; -fx-font-weight: bold; -fx-background-color: #9C27B0; -fx-text-fill: white; -fx-border-radius: 0;"
+                    style="-fx-padding: 8 20 8 20; -fx-font-size: 10; -fx-font-weight: bold; -fx-background-color: #9C27B0; -fx-text-fill: white; -fx-border-radius: 0; -fx-cursor: hand;"
                     onAction="#onEnterApplication"/>
         </VBox>
     </center>
