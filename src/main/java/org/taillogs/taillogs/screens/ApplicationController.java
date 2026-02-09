@@ -146,8 +146,8 @@ public class ApplicationController {
         sidebarVisible = true;
         if (rightPanelContainer != null) {
             rightPanelContainer.setPrefWidth(320);
-            rightPanelContainer.setMinWidth(280);
-            rightPanelContainer.setMaxWidth(400);
+            rightPanelContainer.setMinWidth(50);
+            rightPanelContainer.setMaxWidth(600);
         }
         if (togglePanelBtn != null) {
             togglePanelBtn.setText("◀");
@@ -523,8 +523,8 @@ public class ApplicationController {
         if (sidebarVisible) {
             // Expand panel to full width
             rightPanelContainer.setPrefWidth(320);
-            rightPanelContainer.setMinWidth(280);
-            rightPanelContainer.setMaxWidth(400);
+            rightPanelContainer.setMinWidth(50);
+            rightPanelContainer.setMaxWidth(600);
             togglePanelBtn.setText("◀");
 
             // Show all tabs
