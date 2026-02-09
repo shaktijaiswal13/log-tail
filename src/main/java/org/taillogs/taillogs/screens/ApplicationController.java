@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ApplicationController {
     @FXML
@@ -803,105 +804,125 @@ public class ApplicationController {
 
         String content = logArea.getText();
 
-        // Collect search line ranges
-        Set<LineRange> searchLineRanges = new HashSet<>();
-        Map<Integer, Boolean> isCurrentMatch = new HashMap<>();
-
-        for (int i = 0; i < matchPositions.size(); i++) {
-            int matchPos = matchPositions.get(i);
+        // Build search spans for the entire document
+        StyleSpansBuilder<Collection<String>> searchBuilder = new StyleSpansBuilder<>();
+        Set<LineRange> lineRanges = new HashSet<>();
+        for (int matchPos : matchPositions) {
             LineRange range = getLineRange(content, matchPos);
-            searchLineRanges.add(range);
-            isCurrentMatch.put(range.start, i == currentMatchIndex);
+            lineRanges.add(range);
         }
 
-        List<LineRange> sortedSearchRanges = new ArrayList<>(searchLineRanges);
-        sortedSearchRanges.sort((a, b) -> Integer.compare(a.start, b.start));
+        List<LineRange> sortedRanges = new ArrayList<>(lineRanges);
+        sortedRanges.sort((a, b) -> Integer.compare(a.start, b.start));
 
-        // Create array to track which positions should have search highlighting
-        boolean[] isSearchLine = new boolean[content.length()];
-        Map<Integer, String> searchLineStyles = new HashMap<>();
-
-        for (LineRange range : sortedSearchRanges) {
-            for (int i = range.start; i < range.end && i < content.length(); i++) {
-                isSearchLine[i] = true;
+        int lastEnd = 0;
+        for (LineRange lineRange : sortedRanges) {
+            if (lineRange.start > lastEnd) {
+                searchBuilder.add(Collections.emptyList(), lineRange.start - lastEnd);
             }
-            // Determine if this is the current match line
-            boolean isCurrent = false;
+
+            boolean isCurrentLine = false;
             for (int matchPos : matchPositions) {
-                if (matchPos >= range.start && matchPos < range.end
+                if (matchPos >= lineRange.start && matchPos < lineRange.end
                     && matchPositions.indexOf(matchPos) == currentMatchIndex) {
-                    isCurrent = true;
+                    isCurrentLine = true;
                     break;
                 }
             }
-            searchLineStyles.put(range.start, isCurrent ? "search-current-line" : "search-result-line");
+
+            String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
+            searchBuilder.add(Collections.singleton(styleClass), lineRange.end - lineRange.start);
+            lastEnd = lineRange.end;
         }
 
-        // Get custom highlights
+        if (lastEnd < content.length()) {
+            searchBuilder.add(Collections.emptyList(), content.length() - lastEnd);
+        }
+
+        StyleSpans<Collection<String>> searchSpans = searchBuilder.create();
+
+        // Get custom highlight spans
         StyleSpans<Collection<String>> customSpans = highlightManager.getCustomHighlightSpans(logArea);
 
-        // Build merged spans
-        StyleSpansBuilder<Collection<String>> mergedBuilder = new StyleSpansBuilder<>();
-        int pos = 0;
+        // Merge search and custom spans
+        StyleSpans<Collection<String>> mergedSpans = mergeStyleSpans(searchSpans, customSpans, content.length());
 
-        while (pos < content.length()) {
-            if (isSearchLine[pos]) {
-                // Find the end of this search line
-                int lineEnd = pos;
-                while (lineEnd < content.length() && isSearchLine[lineEnd]) {
-                    lineEnd++;
-                }
-                // Find which style to apply
-                String style = "search-result-line";
-                for (int p = pos; p < lineEnd; p++) {
-                    if (searchLineStyles.containsKey(p)) {
-                        style = searchLineStyles.get(p);
-                        break;
-                    }
-                }
-                mergedBuilder.add(Collections.singleton(style), lineEnd - pos);
-                pos = lineEnd;
-            } else {
-                // Use custom highlight if available
-                if (customSpans != null) {
-                    Collection<String> style = getStyleAtPosition(customSpans, pos);
-                    int nextPos = getNextStyleChangePosition(customSpans, pos);
-                    if (nextPos > content.length()) {
-                        nextPos = content.length();
-                    }
-                    mergedBuilder.add(style, nextPos - pos);
-                    pos = nextPos;
-                } else {
-                    mergedBuilder.add(Collections.emptyList(), 1);
-                    pos++;
-                }
-            }
-        }
-
-        logArea.setStyleSpans(0, mergedBuilder.create());
+        logArea.setStyleSpans(0, mergedSpans);
     }
 
-    private Collection<String> getStyleAtPosition(StyleSpans<Collection<String>> spans, int position) {
+    /**
+     * Merge two StyleSpans objects. Search spans take precedence where both exist.
+     */
+    private StyleSpans<Collection<String>> mergeStyleSpans(StyleSpans<Collection<String>> searchSpans,
+                                                             StyleSpans<Collection<String>> customSpans,
+                                                             int length) {
+        StyleSpansBuilder<Collection<String>> mergedBuilder = new StyleSpansBuilder<>();
+
+        // Build maps of position to style for easier lookup
+        Map<Integer, Collection<String>> searchStyleMap = new HashMap<>();
+        Map<Integer, Collection<String>> customStyleMap = new HashMap<>();
+
         int pos = 0;
-        for (var span : spans) {
-            if (pos <= position && position < pos + span.getLength()) {
-                return span.getStyle();
-            }
+        for (var span : searchSpans) {
+            searchStyleMap.put(pos, span.getStyle());
             pos += span.getLength();
         }
-        return Collections.emptyList();
+
+        if (customSpans != null) {
+            pos = 0;
+            for (var span : customSpans) {
+                customStyleMap.put(pos, span.getStyle());
+                pos += span.getLength();
+            }
+        }
+
+        // Now merge by iterating through all positions
+        Collection<Integer> allChangePoints = new TreeSet<>();
+        allChangePoints.addAll(searchStyleMap.keySet());
+        allChangePoints.addAll(customStyleMap.keySet());
+        allChangePoints.add(length); // Add end position
+
+        List<Integer> sortedPoints = new ArrayList<>(allChangePoints);
+        Collections.sort(sortedPoints);
+
+        for (int i = 0; i < sortedPoints.size() - 1; i++) {
+            int rangeStart = sortedPoints.get(i);
+            int rangeEnd = sortedPoints.get(i + 1);
+
+            // Get the style for this range
+            Collection<String> style = new HashSet<>();
+
+            // Get custom style for this range
+            Collection<String> customStyle = getStyleForPosition(customStyleMap, rangeStart);
+            if (customStyle != null && !customStyle.isEmpty()) {
+                style.addAll(customStyle);
+            }
+
+            // Get search style for this range (takes precedence)
+            Collection<String> searchStyle = getStyleForPosition(searchStyleMap, rangeStart);
+            if (searchStyle != null && !searchStyle.isEmpty()) {
+                style.clear();
+                style.addAll(searchStyle);
+            }
+
+            mergedBuilder.add(style, rangeEnd - rangeStart);
+        }
+
+        return mergedBuilder.create();
     }
 
-    private int getNextStyleChangePosition(StyleSpans<Collection<String>> spans, int position) {
-        int pos = 0;
-        for (var span : spans) {
-            int spanEnd = pos + span.getLength();
-            if (pos <= position && position < spanEnd) {
-                return spanEnd;
+    private Collection<String> getStyleForPosition(Map<Integer, Collection<String>> styleMap, int position) {
+        int maxPos = -1;
+        Collection<String> result = null;
+
+        for (int pos : styleMap.keySet()) {
+            if (pos <= position && pos > maxPos) {
+                maxPos = pos;
+                result = styleMap.get(pos);
             }
-            pos = spanEnd;
         }
-        return position + 1;
+
+        return result;
     }
 
     // Setter for onBack callback
