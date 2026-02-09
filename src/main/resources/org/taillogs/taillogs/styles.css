@@ -19,8 +19,17 @@
     -fx-font-size: 13;
     -fx-padding: 5;
     -fx-cursor: text;
-    -fx-selection-bar: #FF8C00;
-    -fx-selection-bar-non-focused: #FFA500;
+    -fx-highlight-fill: #FF8C00;
+    -fx-accent: #FF8C00;
+}
+
+.code-area:focused {
+    -fx-accent: #FF8C00;
+}
+
+.text:selected {
+    -fx-fill: #000000;
+    -fx-background-color: #FF8C00;
 }
 
 .error {
