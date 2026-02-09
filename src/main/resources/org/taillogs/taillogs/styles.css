@@ -92,13 +92,13 @@
 
 /* Tail Button - Gray/White */
 .tail-button {
-    -fx-background-color: linear-gradient(to bottom, #FFFFFF, #F5F5F5);
+    -fx-background-color: linear-gradient(to bottom, #F8F8F8, #E8E8E8);
     -fx-text-fill: #333333;
     -fx-border-color: #CCCCCC;
 }
 
 .tail-button:hover {
-    -fx-background-color: linear-gradient(to bottom, #F8F8F8, #F0F0F0);
+    -fx-background-color: linear-gradient(to bottom, #FFFFFF, #F0F0F0);
     -fx-border-color: #B0B0B0;
 }
 
