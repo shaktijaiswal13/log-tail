@@ -509,19 +509,36 @@ public class ApplicationController {
     protected void onToggleRightPanel() {
         sidebarVisible = !sidebarVisible;
 
-        // Update button text to show state
         if (sidebarVisible) {
             // Expand panel to full width
             rightPanelContainer.setPrefWidth(320);
             rightPanelContainer.setMinWidth(280);
             rightPanelContainer.setMaxWidth(400);
             togglePanelBtn.setText("◀");
+
+            // Show all tabs
+            if (rightPanelController != null && rightPanelController.tabPane != null) {
+                for (int i = 1; i < rightPanelController.tabPane.getTabs().size(); i++) {
+                    rightPanelController.tabPane.getTabs().get(i).setDisable(false);
+                    rightPanelController.tabPane.getTabs().get(i).setStyle("");
+                }
+            }
         } else {
             // Collapse panel to narrow width (20 pixels - just enough for button)
             rightPanelContainer.setPrefWidth(20);
             rightPanelContainer.setMinWidth(20);
             rightPanelContainer.setMaxWidth(20);
             togglePanelBtn.setText("▶");
+
+            // Hide all tabs except the first one (toggle button)
+            if (rightPanelController != null && rightPanelController.tabPane != null) {
+                for (int i = 1; i < rightPanelController.tabPane.getTabs().size(); i++) {
+                    rightPanelController.tabPane.getTabs().get(i).setDisable(true);
+                    rightPanelController.tabPane.getTabs().get(i).setStyle("-fx-display: none;");
+                }
+                // Make sure the toggle tab is selected
+                rightPanelController.tabPane.getSelectionModel().selectFirst();
+            }
         }
     }
 
