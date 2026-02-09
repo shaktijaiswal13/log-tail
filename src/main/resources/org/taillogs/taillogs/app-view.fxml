@@ -38,10 +38,6 @@
                 <!-- Right Controls -->
                 <Region HBox.hgrow="ALWAYS"/>
                 <HBox spacing="10.0" alignment="CENTER_RIGHT">
-                    <Button fx:id="togglePanelBtn" text="▶" minWidth="40" minHeight="32"
-                            styleClass="action-button"
-                            style="-fx-cursor: hand; -fx-font-size: 14px;"
-                            onAction="#onToggleRightPanel"/>
                     <Button fx:id="pauseBtn" text="Tail" minWidth="80" minHeight="32"
                             styleClass="action-button tail-button"
                             style="-fx-cursor: hand;"
@@ -71,6 +67,10 @@
                 <TextField fx:id="searchField" HBox.hgrow="ALWAYS"
                            style="-fx-font-size: 10; -fx-padding: 5; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-background-color: #f5f5f5; -fx-cursor: text;"
                            promptText="Search log content..."/>
+                <Button fx:id="togglePanelBtn" text="▶" minWidth="40" minHeight="32"
+                        styleClass="action-button"
+                        style="-fx-cursor: hand; -fx-font-size: 14px;"
+                        onAction="#onToggleRightPanel"/>
             </HBox>
 
             <!-- Text Display Area with VirtualizedScrollPane -->
