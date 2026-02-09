@@ -48,8 +48,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ApplicationController {
     @FXML
@@ -685,19 +687,41 @@ public class ApplicationController {
 
         String content = logArea.getText();
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+
+        // Collect all line ranges that contain matches
+        Set<LineRange> lineRanges = new HashSet<>();
+        for (int matchPos : matchPositions) {
+            LineRange range = getLineRange(content, matchPos);
+            lineRanges.add(range);
+        }
+
+        // Convert to sorted list for processing
+        List<LineRange> sortedRanges = new ArrayList<>(lineRanges);
+        sortedRanges.sort((a, b) -> Integer.compare(a.start, b.start));
+
         int lastEnd = 0;
 
-        // Sort match positions for easier iteration
-        for (int pos : matchPositions) {
-            // Add unstyled content before this match
-            if (pos > lastEnd) {
-                spansBuilder.add(Collections.emptyList(), pos - lastEnd);
+        // Apply highlighting to entire lines
+        for (LineRange lineRange : sortedRanges) {
+            // Add unstyled content before this line
+            if (lineRange.start > lastEnd) {
+                spansBuilder.add(Collections.emptyList(), lineRange.start - lastEnd);
             }
 
-            // Determine if this is the current match
-            String styleClass = (matchPositions.indexOf(pos) == currentMatchIndex) ? "search-current" : "search-result";
-            spansBuilder.add(Collections.singleton(styleClass), currentSearchTerm.length());
-            lastEnd = pos + currentSearchTerm.length();
+            // Check if current match is in this line
+            boolean isCurrentLine = false;
+            for (int matchPos : matchPositions) {
+                if (matchPos >= lineRange.start && matchPos < lineRange.end
+                    && matchPositions.indexOf(matchPos) == currentMatchIndex) {
+                    isCurrentLine = true;
+                    break;
+                }
+            }
+
+            // Apply full line highlighting (blue background)
+            String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
+            spansBuilder.add(Collections.singleton(styleClass), lineRange.end - lineRange.start);
+            lastEnd = lineRange.end;
         }
 
         // Add remaining content
@@ -707,6 +731,57 @@ public class ApplicationController {
 
         StyleSpans<Collection<String>> spans = spansBuilder.create();
         logArea.setStyleSpans(0, spans);
+    }
+
+    /**
+     * Get the start and end positions of the line containing the given position
+     */
+    private LineRange getLineRange(String content, int position) {
+        int start = position;
+        int end = position;
+
+        // Find start of line (go back to previous newline)
+        while (start > 0 && content.charAt(start - 1) != '\n') {
+            start--;
+        }
+
+        // Find end of line (go forward to next newline)
+        while (end < content.length() && content.charAt(end) != '\n') {
+            end++;
+        }
+
+        // Include the newline character in the range if it exists
+        if (end < content.length() && content.charAt(end) == '\n') {
+            end++;
+        }
+
+        return new LineRange(start, end);
+    }
+
+    /**
+     * Helper class to represent a line range
+     */
+    private static class LineRange {
+        int start;
+        int end;
+
+        LineRange(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            LineRange lineRange = (LineRange) o;
+            return start == lineRange.start && end == lineRange.end;
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(start, end);
+        }
     }
 
     private void clearSearchHighlights() {
