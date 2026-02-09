@@ -141,6 +141,17 @@ public class ApplicationController {
         System.out.println("About to call setupRightPanel()...");
         setupRightPanel();
         System.out.println("setupRightPanel() completed");
+
+        // Initialize panel to expanded state
+        sidebarVisible = true;
+        if (rightPanelContainer != null) {
+            rightPanelContainer.setPrefWidth(320);
+            rightPanelContainer.setMinWidth(280);
+            rightPanelContainer.setMaxWidth(400);
+        }
+        if (togglePanelBtn != null) {
+            togglePanelBtn.setText("◀");
+        }
     }
 
     public void applyAppearanceSettings(AppearanceSettings settings) {
