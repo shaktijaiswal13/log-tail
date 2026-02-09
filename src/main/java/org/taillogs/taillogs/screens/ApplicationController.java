@@ -572,8 +572,8 @@ public class ApplicationController {
         logArea.moveTo(matchPos);
         logArea.requestFollowCaret();
 
-        // Reapply highlighting to show current match
-        applySearchHighlighting();
+        // Reapply highlighting to show current match (with custom highlights merged)
+        reapplyHighlighting();
 
         statusLabel.setText("Match " + (currentMatchIndex + 1) + " of " + matchPositions.size());
 
@@ -643,8 +643,8 @@ public class ApplicationController {
                 }
             }
 
-            // Apply highlighting to all matches
-            applySearchHighlighting();
+            // Apply highlighting (search + custom highlights merged)
+            reapplyHighlighting();
 
             // Scroll to first match
             int firstMatchPos = matchPositions.get(0);
