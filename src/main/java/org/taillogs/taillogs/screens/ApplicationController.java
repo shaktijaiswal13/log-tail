@@ -803,59 +803,105 @@ public class ApplicationController {
 
         String content = logArea.getText();
 
-        // Build search highlighting spans with line ranges
-        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+        // Collect search line ranges
+        Set<LineRange> searchLineRanges = new HashSet<>();
+        Map<Integer, Boolean> isCurrentMatch = new HashMap<>();
 
-        // Collect all line ranges for search matches
-        Set<LineRange> lineRanges = new HashSet<>();
-        for (int matchPos : matchPositions) {
+        for (int i = 0; i < matchPositions.size(); i++) {
+            int matchPos = matchPositions.get(i);
             LineRange range = getLineRange(content, matchPos);
-            lineRanges.add(range);
+            searchLineRanges.add(range);
+            isCurrentMatch.put(range.start, i == currentMatchIndex);
         }
 
-        // Convert to sorted list
-        List<LineRange> sortedRanges = new ArrayList<>(lineRanges);
-        sortedRanges.sort((a, b) -> Integer.compare(a.start, b.start));
+        List<LineRange> sortedSearchRanges = new ArrayList<>(searchLineRanges);
+        sortedSearchRanges.sort((a, b) -> Integer.compare(a.start, b.start));
 
-        int lastEnd = 0;
+        // Create array to track which positions should have search highlighting
+        boolean[] isSearchLine = new boolean[content.length()];
+        Map<Integer, String> searchLineStyles = new HashMap<>();
 
-        // Apply full line highlighting
-        for (LineRange lineRange : sortedRanges) {
-            // Add unstyled content before this line
-            if (lineRange.start > lastEnd) {
-                spansBuilder.add(Collections.emptyList(), lineRange.start - lastEnd);
+        for (LineRange range : sortedSearchRanges) {
+            for (int i = range.start; i < range.end && i < content.length(); i++) {
+                isSearchLine[i] = true;
             }
-
-            // Check if current match is in this line
-            boolean isCurrentLine = false;
+            // Determine if this is the current match line
+            boolean isCurrent = false;
             for (int matchPos : matchPositions) {
-                if (matchPos >= lineRange.start && matchPos < lineRange.end
+                if (matchPos >= range.start && matchPos < range.end
                     && matchPositions.indexOf(matchPos) == currentMatchIndex) {
-                    isCurrentLine = true;
+                    isCurrent = true;
                     break;
                 }
             }
-
-            // Apply search highlight for entire line (takes precedence over custom highlights)
-            String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
-            spansBuilder.add(Collections.singleton(styleClass), lineRange.end - lineRange.start);
-            lastEnd = lineRange.end;
+            searchLineStyles.put(range.start, isCurrent ? "search-current-line" : "search-result-line");
         }
 
-        // Add remaining content
-        if (lastEnd < content.length()) {
-            spansBuilder.add(Collections.emptyList(), content.length() - lastEnd);
+        // Get custom highlights
+        StyleSpans<Collection<String>> customSpans = highlightManager.getCustomHighlightSpans(logArea);
+
+        // Build merged spans
+        StyleSpansBuilder<Collection<String>> mergedBuilder = new StyleSpansBuilder<>();
+        int pos = 0;
+
+        while (pos < content.length()) {
+            if (isSearchLine[pos]) {
+                // Find the end of this search line
+                int lineEnd = pos;
+                while (lineEnd < content.length() && isSearchLine[lineEnd]) {
+                    lineEnd++;
+                }
+                // Find which style to apply
+                String style = "search-result-line";
+                for (int p = pos; p < lineEnd; p++) {
+                    if (searchLineStyles.containsKey(p)) {
+                        style = searchLineStyles.get(p);
+                        break;
+                    }
+                }
+                mergedBuilder.add(Collections.singleton(style), lineEnd - pos);
+                pos = lineEnd;
+            } else {
+                // Use custom highlight if available
+                if (customSpans != null) {
+                    Collection<String> style = getStyleAtPosition(customSpans, pos);
+                    int nextPos = getNextStyleChangePosition(customSpans, pos);
+                    if (nextPos > content.length()) {
+                        nextPos = content.length();
+                    }
+                    mergedBuilder.add(style, nextPos - pos);
+                    pos = nextPos;
+                } else {
+                    mergedBuilder.add(Collections.emptyList(), 1);
+                    pos++;
+                }
+            }
         }
 
-        StyleSpans<Collection<String>> searchSpans = spansBuilder.create();
-        logArea.setStyleSpans(0, searchSpans);
+        logArea.setStyleSpans(0, mergedBuilder.create());
+    }
 
-        // Now apply combined highlighting as a second pass for non-search areas
-        // This allows custom highlights to show through in areas not covered by search
-        highlightManager.applyCombinedHighlighting(logArea);
+    private Collection<String> getStyleAtPosition(StyleSpans<Collection<String>> spans, int position) {
+        int pos = 0;
+        for (var span : spans) {
+            if (pos <= position && position < pos + span.getLength()) {
+                return span.getStyle();
+            }
+            pos += span.getLength();
+        }
+        return Collections.emptyList();
+    }
 
-        // Reapply search highlighting on top to ensure search takes precedence
-        applySearchHighlighting();
+    private int getNextStyleChangePosition(StyleSpans<Collection<String>> spans, int position) {
+        int pos = 0;
+        for (var span : spans) {
+            int spanEnd = pos + span.getLength();
+            if (pos <= position && position < spanEnd) {
+                return spanEnd;
+            }
+            pos = spanEnd;
+        }
+        return position + 1;
     }
 
     // Setter for onBack callback

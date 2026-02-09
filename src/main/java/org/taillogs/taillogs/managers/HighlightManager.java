@@ -237,15 +237,45 @@ public class HighlightManager {
         return builder.create();
     }
 
+    /**
+     * Get the style spans for custom highlighting without applying them.
+     * Used for merging with search highlighting.
+     */
+    public StyleSpans<Collection<String>> getCustomHighlightSpans(CodeArea codeArea) {
+        System.out.println("[HighlightManager] getCustomHighlightSpans called");
+
+        String text = codeArea.getText();
+        if (text.isEmpty()) {
+            System.out.println("[HighlightManager] Text is empty");
+            // Return empty spans
+            StyleSpansBuilder<Collection<String>> builder = new StyleSpansBuilder<>();
+            builder.add(Collections.emptyList(), 0);
+            return builder.create();
+        }
+
+        // Ensure custom style classes are available in CodeArea's stylesheet
+        updateCustomStylesheet(codeArea);
+
+        try {
+            StyleSpans<Collection<String>> combined = buildCombinedHighlighting(text);
+            System.out.println("[HighlightManager] Built style spans successfully");
+            return combined;
+        } catch (Exception e) {
+            System.err.println("[HighlightManager] Error building style spans: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public void applyCombinedHighlighting(CodeArea codeArea) {
         System.out.println("[HighlightManager] applyCombinedHighlighting called");
-        
+
         String text = codeArea.getText();
         if (text.isEmpty()) {
             System.out.println("[HighlightManager] Text is empty, skipping highlighting");
             return;
         }
-        
+
         System.out.println("[HighlightManager] Text length: " + text.length() + ", patterns count: " + patterns.size());
 
         // Ensure custom style classes are available in CodeArea's stylesheet
