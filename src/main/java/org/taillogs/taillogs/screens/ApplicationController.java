@@ -179,13 +179,19 @@ public class ApplicationController {
     
     private void updateButtonState() {
         if (!pauseMode) {
-            // Tailing is active - add visual indicator via CSS class
-            if (!pauseBtn.getStyleClass().contains("active")) {
-                pauseBtn.getStyleClass().add("active");
-            }
+            // Tailing is active - show darker color
+            pauseBtn.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #A8A8A8, #909090); " +
+                "-fx-border-color: #707070; " +
+                "-fx-text-fill: #FFFFFF;"
+            );
         } else {
-            // Tailing is paused - remove active indicator
-            pauseBtn.getStyleClass().remove("active");
+            // Tailing is paused - show light gray like other buttons
+            pauseBtn.setStyle(
+                "-fx-background-color: linear-gradient(to bottom, #F8F8F8, #E8E8E8); " +
+                "-fx-border-color: #CCCCCC; " +
+                "-fx-text-fill: #333333;"
+            );
         }
     }
 
