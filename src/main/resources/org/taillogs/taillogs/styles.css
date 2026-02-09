@@ -48,16 +48,18 @@
     -fx-font-weight: bold;
 }
 
-/* Search result line styles - bright lime green text */
+/* Search result line styles - dark blue text, bold, and underlined */
 .search-result-line {
-    -fx-fill: #00FF00;
+    -fx-fill: #003366;
     -fx-font-weight: bold;
+    -fx-underline: true;
 }
 
-/* Current search match line - bright yellow text */
+/* Current search match line - dark red text, bold, and underlined */
 .search-current-line {
-    -fx-fill: #FFFF00;
+    -fx-fill: #CC0000;
     -fx-font-weight: bold;
+    -fx-underline: true;
 }
 
 /* Modern Action Buttons - Gray/White Theme */
