@@ -501,10 +501,10 @@ public class ApplicationController {
             rightPanelContainer.setMaxWidth(400);
             togglePanelBtn.setText("◀");
         } else {
-            // Collapse panel to narrow width (5 pixels)
-            rightPanelContainer.setPrefWidth(5);
-            rightPanelContainer.setMinWidth(5);
-            rightPanelContainer.setMaxWidth(5);
+            // Collapse panel to narrow width (20 pixels - just enough for button)
+            rightPanelContainer.setPrefWidth(20);
+            rightPanelContainer.setMinWidth(20);
+            rightPanelContainer.setMaxWidth(20);
             togglePanelBtn.setText("▶");
         }
     }

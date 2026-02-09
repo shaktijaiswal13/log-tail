@@ -67,10 +67,6 @@
                 <TextField fx:id="searchField" HBox.hgrow="ALWAYS"
                            style="-fx-font-size: 10; -fx-padding: 5; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-background-color: #f5f5f5; -fx-cursor: text;"
                            promptText="Search log content..."/>
-                <Button fx:id="togglePanelBtn" text="▶" minWidth="40" minHeight="32"
-                        styleClass="action-button"
-                        style="-fx-cursor: hand; -fx-font-size: 14px;"
-                        onAction="#onToggleRightPanel"/>
             </HBox>
 
             <!-- Text Display Area with VirtualizedScrollPane -->
@@ -94,6 +90,11 @@
     <!-- RIGHT: Right Panel Container -->
     <right>
         <VBox fx:id="rightPanelContainer" prefWidth="320" minWidth="280" maxWidth="400" style="-fx-background-color: #f5f5f5; -fx-border-color: #dddddd; -fx-border-width: 0 0 0 1;">
+            <!-- Collapse/Expand Button - Always visible -->
+            <Button fx:id="togglePanelBtn" text="◀" minWidth="20" minHeight="32" maxWidth="Infinity"
+                    styleClass="action-button"
+                    style="-fx-cursor: hand; -fx-font-size: 14px; -fx-padding: 0;"
+                    onAction="#onToggleRightPanel"/>
             <Label text="Right Panel Loading..." style="-fx-padding: 10; -fx-text-fill: #333;" />
         </VBox>
     </right>
