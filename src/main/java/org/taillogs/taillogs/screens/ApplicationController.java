@@ -792,6 +792,72 @@ public class ApplicationController {
         highlightManager.applyCombinedHighlighting(logArea);
     }
 
+    /**
+     * Apply both search highlighting and custom highlights together
+     * Applies combined highlights first, then overlays search results
+     */
+    private void applySearchAndHighlightsCombined() {
+        if (currentSearchTerm.isEmpty() || matchPositions.isEmpty()) {
+            return;
+        }
+
+        String content = logArea.getText();
+
+        // Build search highlighting spans with line ranges
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+
+        // Collect all line ranges for search matches
+        Set<LineRange> lineRanges = new HashSet<>();
+        for (int matchPos : matchPositions) {
+            LineRange range = getLineRange(content, matchPos);
+            lineRanges.add(range);
+        }
+
+        // Convert to sorted list
+        List<LineRange> sortedRanges = new ArrayList<>(lineRanges);
+        sortedRanges.sort((a, b) -> Integer.compare(a.start, b.start));
+
+        int lastEnd = 0;
+
+        // Apply full line highlighting
+        for (LineRange lineRange : sortedRanges) {
+            // Add unstyled content before this line
+            if (lineRange.start > lastEnd) {
+                spansBuilder.add(Collections.emptyList(), lineRange.start - lastEnd);
+            }
+
+            // Check if current match is in this line
+            boolean isCurrentLine = false;
+            for (int matchPos : matchPositions) {
+                if (matchPos >= lineRange.start && matchPos < lineRange.end
+                    && matchPositions.indexOf(matchPos) == currentMatchIndex) {
+                    isCurrentLine = true;
+                    break;
+                }
+            }
+
+            // Apply search highlight for entire line (takes precedence over custom highlights)
+            String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
+            spansBuilder.add(Collections.singleton(styleClass), lineRange.end - lineRange.start);
+            lastEnd = lineRange.end;
+        }
+
+        // Add remaining content
+        if (lastEnd < content.length()) {
+            spansBuilder.add(Collections.emptyList(), content.length() - lastEnd);
+        }
+
+        StyleSpans<Collection<String>> searchSpans = spansBuilder.create();
+        logArea.setStyleSpans(0, searchSpans);
+
+        // Now apply combined highlighting as a second pass for non-search areas
+        // This allows custom highlights to show through in areas not covered by search
+        highlightManager.applyCombinedHighlighting(logArea);
+
+        // Reapply search highlighting on top to ensure search takes precedence
+        applySearchHighlighting();
+    }
+
     // Setter for onBack callback
     public void setOnBack(Runnable callback) {
         this.onBack = callback;
@@ -893,9 +959,9 @@ public class ApplicationController {
             System.out.println("[ApplicationController] No active search, applying combined highlighting");
             highlightManager.applyCombinedHighlighting(logArea);
         } else {
-            // Search is active, keep search highlighting but apply combined as base
-            System.out.println("[ApplicationController] Search is active, applying search highlighting");
-            applySearchHighlighting();
+            // Search is active, apply both combined highlighting AND search highlighting
+            System.out.println("[ApplicationController] Search is active, applying search + combined highlighting");
+            applySearchAndHighlightsCombined();
         }
 
         if (rightPanelController != null) {
