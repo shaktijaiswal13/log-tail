@@ -292,23 +292,80 @@ Application-wide configuration constants.
 Core file I/O and real-time tailing.
 
 **Key Features:**
-- Load file content (handles large files)
+- Load file content (handles large files with 8KB buffer)
 - Real-time tailing with background thread monitoring
-- Pause/resume tailing capability
-- Configurable check interval (default 1 second)
+- Pause/resume tailing capability with thread management
+- Check interval: 200ms (efficient polling strategy)
+- Tracks file position to read only new content
+- Handles UTF-8 encoded files
 
 **Key Methods:**
-- `loadFileContent(File)` - Read entire file
+- `loadFileContent(File)` - Read entire file content
 - `startTailing(File, callback)` - Begin monitoring for changes
-- `stopTailing()` - Stop monitoring
-- `pauseTailing()` / `resumeTailing()` - Pause without stopping thread
-- `isFileBeingTailed()` - Check current tailing status
+- `stopTailing()` / `pauseTailing()` - Stop monitoring
+- `refreshFile(File)` - Force full reload of file content
 
-**Tailing Implementation:**
-- Background thread monitors file size at regular intervals
-- When size changes, reads new content from last known position
-- Invokes callback with new lines via `Platform.runLater()` for thread safety
-- Prevents blocking UI thread during large file operations
+**Tailing Implementation Details:**
+
+1. **Thread Management:**
+   - Spawns daemon thread named "TailThread" when tailing starts
+   - Uses `TailThreadRef` class to safely manage thread state (synchronized)
+   - Thread state tracked with `AtomicBoolean` for thread safety
+
+2. **File Monitoring Loop:**
+   ```
+   Loop every 200ms:
+     1. Get current file size
+     2. Compare with last known position
+     3. If file grew: read new content from last position
+     4. If file shrank or moved: auto-reset (file rotated/truncated)
+     5. Invoke callback via Platform.runLater() for UI update
+     6. Update stored position for next iteration
+   ```
+
+3. **Position Tracking:**
+   - Stores last read position in `TailThreadRef.filePosition`
+   - First tail starts from current file end (no re-read of old content)
+   - Uses `InputStreamReader.skip()` to jump to position quickly
+   - Reads new data in 8KB chunks to handle large additions
+
+4. **Highlighting Integration:**
+   - Calls `highlightCallback` after appending new content
+   - Applies both custom patterns and log-level highlighting
+   - Search highlighting overlays automatically (highest priority)
+   - Auto-scrolls to end of file to show latest content
+
+5. **Error Handling:**
+   - Silently ignores temporary read errors (file in use, etc.)
+   - Continues monitoring on error instead of crashing
+   - Handles InterruptedException when thread is stopped
+
+6. **Performance Optimizations:**
+   - 200ms check interval balances responsiveness vs CPU usage
+   - Only reads changed portions (not entire file each time)
+   - 8KB buffer efficient for typical log line sizes
+   - Daemon thread won't prevent app shutdown
+
+**Usage Pattern:**
+```java
+// Start tailing with custom highlighting
+FileOperations.startTailing(filePath, codeArea, threadRef,
+    () -> highlightManager.applyCombinedHighlighting(codeArea));
+
+// Pause (thread continues but UI not updated)
+threadRef.setActive(false);
+
+// Resume
+threadRef.setActive(true);
+
+// Stop tailing completely
+threadRef.setActive(false);
+```
+
+**Thread Safety:**
+- `TailThreadRef` uses synchronized methods for thread-safe state access
+- All UI updates through `Platform.runLater()` on JavaFX thread
+- File read operations isolated to background thread
 
 #### **SyntaxHighlighter.java** (68 lines)
 Log-level based syntax highlighting.
@@ -450,21 +507,44 @@ MenuBarCreator.updateRecentFilesMenu()
 ```
 ApplicationController.loadFile() calls FileOperations.startTailing(file)
     ↓
-FileOperations spawns background thread
+FileOperations.startTailing():
+  1. Set threadRef.active = true
+  2. Spawn daemon thread "TailThread"
+  3. Start tailFile() background loop
     ↓
-Background thread loops:
-  - Check file size every 1 second
-  - If size increased: read new content
-  - Platform.runLater() → trigger highlight callback
+Background tailFile() loop (200ms intervals):
+  1. Check file size
+  2. If size > lastPosition:
+     - Skip to lastPosition
+     - Read new content into buffer
+     - Platform.runLater() on JavaFX thread:
+       - Append text to CodeArea
+       - Call highlightCallback
+       - Update UI scroll position
+       - Update lastPosition
+  3. Sleep 200ms
+  4. Continue loop while threadRef.active == true
     ↓
-Highlight callback invokes HighlightManager.applyCombinedHighlighting()
+Highlight callback: HighlightManager.applyCombinedHighlighting()
+    ├→ Apply custom patterns (from Highlights tab)
+    ├→ Apply log-level highlighting (ERROR/WARN/INFO)
+    ├→ Apply search highlighting (highest priority if active)
+    └→ Update CodeArea StyleSpans (visual refresh)
     ↓
-    ├→ Apply custom patterns
-    ├→ Apply log-level highlighting
-    └→ Apply search highlighting (highest priority)
+CodeArea automatically scrolls to end showing latest content
     ↓
-CodeArea updated with new StyleSpans (visual refresh)
+User can:
+  - Pause: Set threadRef.active = false (stops updates, thread still running)
+  - Resume: Set threadRef.active = true (resumes monitoring)
+  - Stop: Set threadRef.active = false (ends background thread)
 ```
+
+**Key Design Points:**
+- **Polling vs Watching:** Uses polling (200ms intervals) instead of file watchers for cross-platform compatibility
+- **Position Tracking:** Stores file position to read only new content, not entire file each check
+- **Lazy Load First Time:** First tail starts from current file end, not beginning
+- **Thread Safety:** `TailThreadRef` synchronized class for safe state access
+- **UI Thread Safety:** `Platform.runLater()` ensures all CodeArea updates on JavaFX thread
 
 ### 3. Search & Filter Workflow
 ```
@@ -508,14 +588,24 @@ PreferencesManager.loadHighlightPatterns(file)
 
 ## Key Features
 
+### Real-Time Tailing Feature
+- ✅ **Background Thread Monitoring** - Daemon thread monitors file changes every 200ms
+- ✅ **Position Tracking** - Only reads new content, not entire file each time
+- ✅ **Smart Position Management** - Auto-resets if file rotated or truncated
+- ✅ **Lazy First Load** - Initial tail starts from current file end
+- ✅ **Pause/Resume Control** - Pause updates without killing monitoring thread
+- ✅ **Thread-Safe State** - Synchronized TailThreadRef for safe inter-thread communication
+- ✅ **UI Thread Safety** - All UI updates via Platform.runLater()
+- ✅ **Auto-Scroll** - Automatically scrolls to show latest content
+- ✅ **Combined Highlighting** - New content gets custom patterns + log levels + search highlighting
+
 ### Core Features
-- ✅ Real-time log file tailing with background monitoring
 - ✅ Multiple concurrent file monitoring with tab switching
 - ✅ Syntax highlighting for log levels (ERROR, WARN, INFO)
 - ✅ Live search with real-time filtering
 - ✅ Content caching per file
-- ✅ Pause/Resume tailing control
 - ✅ Clear display and refresh functionality
+- ✅ UTF-8 file encoding support
 
 ### Advanced Features (Recently Implemented)
 - ✅ Custom pattern highlighting (regex or plain text) with custom colors
