@@ -318,9 +318,8 @@ Core file I/O and real-time tailing.
      1. Get current file size
      2. Compare with last known position
      3. If file grew: read new content from last position
-     4. If file shrank or moved: auto-reset (file rotated/truncated)
-     5. Invoke callback via Platform.runLater() for UI update
-     6. Update stored position for next iteration
+     4. Invoke callback via Platform.runLater() for UI update
+     5. Update stored position for next iteration
    ```
 
 3. **Position Tracking:**
@@ -591,9 +590,9 @@ PreferencesManager.loadHighlightPatterns(file)
 ### Real-Time Tailing Feature
 - ✅ **Background Thread Monitoring** - Daemon thread monitors file changes every 200ms
 - ✅ **Position Tracking** - Only reads new content, not entire file each time
-- ✅ **Smart Position Management** - Auto-resets if file rotated or truncated
+- ✅ **Simple Growth-Only Logic** - Appends only when file size grows (no rotate/truncate handling yet)
 - ✅ **Lazy First Load** - Initial tail starts from current file end
-- ✅ **Pause/Resume Control** - Pause updates without killing monitoring thread
+- ✅ **Pause/Resume Control** - Toggling TailThreadRef stops the loop; resuming starts a new tail thread
 - ✅ **Thread-Safe State** - Synchronized TailThreadRef for safe inter-thread communication
 - ✅ **UI Thread Safety** - All UI updates via Platform.runLater()
 - ✅ **Auto-Scroll** - Automatically scrolls to show latest content
