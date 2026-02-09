@@ -46,19 +46,17 @@
     -fx-font-weight: bold;
 }
 
-/* Search result line styles - full line highlighting */
+/* Search result line styles - bright colors with bold and underline */
 .search-result-line {
-    -fx-fill: #FFFFFF;
-    -fx-background-color: #4A90E2;
-    -fx-font-weight: normal;
-    -fx-padding: 2px 0px 2px 0px;
+    -fx-fill: #0047AB;
+    -fx-font-weight: bold;
+    -fx-underline: true;
 }
 
 .search-current-line {
-    -fx-fill: #FFFFFF;
-    -fx-background-color: #0047AB;
+    -fx-fill: #FFD700;
     -fx-font-weight: bold;
-    -fx-padding: 2px 0px 2px 0px;
+    -fx-underline: true;
 }
 
 /* Modern Action Buttons - Gray/White Theme */
