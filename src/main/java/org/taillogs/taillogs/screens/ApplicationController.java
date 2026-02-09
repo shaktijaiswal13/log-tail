@@ -316,9 +316,25 @@ public class ApplicationController {
             Tab bookmarksTab = new Tab("Bookmarks", bookmarksContent);
             bookmarksTab.setClosable(false);
 
-            // Add all tabs to TabPane
+            // Create a toggle button tab as the first tab
+            System.out.println("Creating toggle button as first tab...");
+            Tab toggleTab = new Tab();
+            toggleTab.setText("◀");
+            toggleTab.setStyle("-fx-padding: 4; -fx-font-size: 12px;");
+            toggleTab.setClosable(false);
+            VBox toggleTabContent = new VBox();
+            toggleTabContent.setStyle("-fx-background-color: transparent;");
+            toggleTab.setContent(toggleTabContent);
+            toggleTab.setOnSelectionChanged(event -> {
+                if (toggleTab.isSelected()) {
+                    onToggleRightPanel();
+                    tabPane.getSelectionModel().selectFirst();
+                }
+            });
+
+            // Add all tabs to TabPane (toggle button tab first)
             System.out.println("Adding tabs to TabPane...");
-            tabPane.getTabs().addAll(highlightsTab, filtersTab, bookmarksTab);
+            tabPane.getTabs().addAll(toggleTab, highlightsTab, filtersTab, bookmarksTab);
             System.out.println("Tabs added: " + tabPane.getTabs().size());
 
             // Wire UI components to the RightPanelController
@@ -340,10 +356,6 @@ public class ApplicationController {
             // Set callbacks for when highlights/filters change
             rightPanelController.setOnHighlightsChanged(this::reapplyHighlighting);
             rightPanelController.setOnFiltersChanged(this::applyFilteringToContent);
-
-            // Add toggle button first (so it's always visible)
-            System.out.println("Adding toggle button to rightPanelContainer...");
-            rightPanelContainer.getChildren().add(togglePanelBtn);
 
             // Add TabPane to the container
             System.out.println("Adding TabPane to rightPanelContainer...");
