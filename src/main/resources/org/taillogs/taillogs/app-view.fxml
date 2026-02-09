@@ -38,6 +38,10 @@
                 <!-- Right Controls -->
                 <Region HBox.hgrow="ALWAYS"/>
                 <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                    <Button fx:id="togglePanelBtn" text="▶" minWidth="40" minHeight="32"
+                            styleClass="action-button"
+                            style="-fx-cursor: hand; -fx-font-size: 14px;"
+                            onAction="#onToggleRightPanel"/>
                     <Button fx:id="pauseBtn" text="Tail" minWidth="80" minHeight="32"
                             styleClass="action-button tail-button"
                             style="-fx-cursor: hand;"

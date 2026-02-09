@@ -58,6 +58,8 @@ public class ApplicationController {
     @FXML
     private Label fileInfoLabel;
     @FXML
+    private Button togglePanelBtn;
+    @FXML
     private Button pauseBtn;
     @FXML
     private Button clearBtn;
@@ -484,6 +486,20 @@ public class ApplicationController {
             });
             statusLabel.setText("Tailing: " + new File(currentFilePath).getName());
             originalLogContent = logArea.getText();
+        }
+    }
+
+    @FXML
+    protected void onToggleRightPanel() {
+        sidebarVisible = !sidebarVisible;
+        rightPanelContainer.setManaged(sidebarVisible);
+        rightPanelContainer.setVisible(sidebarVisible);
+
+        // Update button text to show state
+        if (sidebarVisible) {
+            togglePanelBtn.setText("◀");
+        } else {
+            togglePanelBtn.setText("▶");
         }
     }
 
