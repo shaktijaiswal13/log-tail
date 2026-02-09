@@ -1097,21 +1097,21 @@ public class ApplicationController {
 
         // File name label
         Label fileName = new Label(new File(filePath).getName());
-        int tabFontSize = Math.max(8, appearanceSettings.getFontSize() - 4);
+        int tabFontSize = Math.max(11, appearanceSettings.getFontSize() - 2);
         String tabFontWeightStyle = appearanceSettings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
         fileName.setStyle("-fx-font-size: " + tabFontSize + "; -fx-text-fill: #333333; " + tabFontWeightStyle);
 
         // Close button
         Button closeTab = new Button("\u2715");
         closeTab.setStyle(
-            "-fx-padding: 2 4 2 4; " +
-            "-fx-font-size: 8; " +
+            "-fx-padding: 3 5 3 5; " +
+            "-fx-font-size: 12; " +
             "-fx-background-color: white; " +
             "-fx-text-fill: black; " +
             "-fx-border-width: 0; " +
             "-fx-border-radius: 0; " +
-            "-fx-min-width: 20; " +
-            "-fx-min-height: 18; " +
+            "-fx-min-width: 26; " +
+            "-fx-min-height: 24; " +
             "-fx-cursor: hand;"
         );
         closeTab.setCursor(Cursor.HAND);
@@ -1147,7 +1147,7 @@ public class ApplicationController {
                 "-fx-border-width: 2 1 0 1; " +
                 "-fx-alignment: CENTER_LEFT;"
             );
-            fileName.setStyle("-fx-font-size: 9; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+            fileName.setStyle("-fx-font-size: " + (tabFontSize + 1) + "; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
         }
 
         return tab;

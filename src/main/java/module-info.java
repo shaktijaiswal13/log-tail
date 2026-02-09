@@ -2,11 +2,8 @@ module org.taillogs.taillogs {
     requires javafx.controls;
     requires javafx.fxml;
     requires org.fxmisc.richtext;
-<<<<<<< Updated upstream
     requires com.google.gson;
-=======
     requires java.desktop;
->>>>>>> Stashed changes
 
     opens org.taillogs.taillogs to javafx.fxml;
     opens org.taillogs.taillogs.screens to javafx.fxml;
