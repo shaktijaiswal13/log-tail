@@ -19,6 +19,8 @@
     -fx-font-size: 13;
     -fx-padding: 5;
     -fx-cursor: text;
+    -fx-selection-bar: #FFD700;
+    -fx-selection-bar-non-focused: #FFED4E;
 }
 
 .error {
