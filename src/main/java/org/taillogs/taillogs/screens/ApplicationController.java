@@ -178,10 +178,15 @@ public class ApplicationController {
     }
     
     private void updateButtonState() {
-        // Use CSS classes for styling instead of inline styles
-        // This allows the button to look consistent with other buttons (Clear, Refresh)
-        pauseBtn.getStyleClass().remove("active");
-        // Always keep the same appearance - no special styling for pause state
+        if (!pauseMode) {
+            // Tailing is active - add visual indicator via CSS class
+            if (!pauseBtn.getStyleClass().contains("active")) {
+                pauseBtn.getStyleClass().add("active");
+            }
+        } else {
+            // Tailing is paused - remove active indicator
+            pauseBtn.getStyleClass().remove("active");
+        }
     }
 
     private void setupUI() {
