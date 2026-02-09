@@ -48,16 +48,16 @@
     -fx-font-weight: bold;
 }
 
-/* Search result line styles - blue background with normal text size */
+/* Search result line styles - dark gray background with white text */
 .search-result-line {
-    -fx-fill: #000000;
-    -fx-background-color: #4A90E2;
+    -fx-fill: #FFFFFF;
+    -fx-background-color: #555555;
 }
 
-/* Current search match line - darker blue background */
+/* Current search match line - darker gray background */
 .search-current-line {
     -fx-fill: #FFFFFF;
-    -fx-background-color: #0047AB;
+    -fx-background-color: #333333;
 }
 
 /* Modern Action Buttons - Gray/White Theme */
