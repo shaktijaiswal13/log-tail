@@ -142,7 +142,7 @@ public class FilterManager {
         rules.addAll(loaded);
     }
 
-    private void saveRules() {
+    public void saveRules() {
         List<FilterRule> rulesCopy = new ArrayList<>(rules);
 
         if (currentFilePath != null) {

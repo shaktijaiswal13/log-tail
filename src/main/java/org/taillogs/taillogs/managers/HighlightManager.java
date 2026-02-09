@@ -358,7 +358,7 @@ public class HighlightManager {
         System.out.println("[HighlightManager] Loaded " + loaded.size() + " patterns for file: " + currentFilePath);
     }
 
-    private void savePatterns() {
+    public void savePatterns() {
         List<HighlightPattern> patternsCopy = new ArrayList<>(patterns);
 
         if (currentFilePath != null) {

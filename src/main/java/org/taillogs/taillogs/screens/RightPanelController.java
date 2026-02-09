@@ -93,7 +93,7 @@ public class RightPanelController {
                     checkbox.setSelected(pattern.isEnabled());
                     checkbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                         pattern.setEnabled(newVal);
-                        highlightManager.togglePattern(pattern.getId());
+                        highlightManager.savePatterns();  // Save the state change
                         System.out.println("[RightPanelController] Pattern toggled: " + pattern.getPattern() + " enabled=" + newVal);
                         if (onHighlightsChanged != null) {
                             System.out.println("[RightPanelController] Calling onHighlightsChanged callback");
@@ -231,7 +231,8 @@ public class RightPanelController {
                     checkbox.setSelected(rule.isEnabled());
                     checkbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                         rule.setEnabled(newVal);
-                        filterManager.toggleRule(rule.getId());
+                        filterManager.saveRules();  // Save the state change
+                        System.out.println("[RightPanelController] Rule toggled: " + rule.getPattern() + " enabled=" + newVal);
                         if (onFiltersChanged != null) onFiltersChanged.run();
                     });
 
