@@ -217,12 +217,10 @@ public class ApplicationController {
         // Set text selection cursor for CodeArea
         logArea.setCursor(Cursor.TEXT);
 
-        // Configure scrollbars and selection color
+        // Configure scrollbars to always be visible
         String scrollbarCSS = "-fx-control-inner-background: #ffffff; " +
                              "-fx-padding: 0; " +
-                             "-fx-text-fill: #333333; " +
-                             "-fx-selection-bar: #FF8C00; " +
-                             "-fx-selection-bar-non-focused: #FFA500;";
+                             "-fx-text-fill: #333333;";
         logArea.setStyle(logArea.getStyle() + " " + scrollbarCSS);
 
         // Setup hover effects for buttons
