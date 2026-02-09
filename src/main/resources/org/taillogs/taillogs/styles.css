@@ -46,14 +46,33 @@
     -fx-font-weight: bold;
 }
 
-/* Search result line styles - bright colors with bold and underline */
+/* Enhanced search result styling */
+.search-highlight {
+    -fx-font-size: 13;
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+}
+
+/* Search result line styles - bright blue text */
 .search-result-line {
     -fx-fill: #0047AB;
     -fx-font-weight: bold;
     -fx-underline: true;
 }
 
+.search-result-line.search-highlight {
+    -fx-fill: #1E90FF;
+    -fx-font-weight: bold;
+    -fx-underline: true;
+}
+
+/* Current search match line - bright yellow */
 .search-current-line {
+    -fx-fill: #FFD700;
+    -fx-font-weight: bold;
+    -fx-underline: true;
+}
+
+.search-current-line.search-highlight {
     -fx-fill: #FFD700;
     -fx-font-weight: bold;
     -fx-underline: true;
