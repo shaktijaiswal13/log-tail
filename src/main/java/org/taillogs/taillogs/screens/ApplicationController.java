@@ -194,10 +194,10 @@ public class ApplicationController {
                 "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 4, 0, 0, 2);"
             );
         } else {
-            // Tailing is paused, show classic light grey
+            // Tailing is paused, show light grey (same as Clear/Refresh buttons)
             pauseBtn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #F5F5F5, #E8E8E8); " +
-                "-fx-text-fill: #666666; " +
+                "-fx-background-color: linear-gradient(to bottom, #F8F8F8, #E8E8E8); " +
+                "-fx-text-fill: #333333; " +
                 "-fx-border-color: #CCCCCC; " +
                 "-fx-padding: 8 18 8 18; " +
                 "-fx-font-size: 11px; " +
