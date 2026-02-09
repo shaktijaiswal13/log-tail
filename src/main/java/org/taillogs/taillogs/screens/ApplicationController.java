@@ -718,12 +718,9 @@ public class ApplicationController {
                 }
             }
 
-            // Apply full line highlighting with multiple style classes
+            // Apply full line highlighting (blue background)
             String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
-            Collection<String> styles = new ArrayList<>();
-            styles.add(styleClass);
-            styles.add("search-highlight");  // Additional styling
-            spansBuilder.add(styles, lineRange.end - lineRange.start);
+            spansBuilder.add(Collections.singleton(styleClass), lineRange.end - lineRange.start);
             lastEnd = lineRange.end;
         }
 

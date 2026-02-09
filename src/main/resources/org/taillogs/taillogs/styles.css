@@ -46,36 +46,16 @@
     -fx-font-weight: bold;
 }
 
-/* Enhanced search result styling */
-.search-highlight {
-    -fx-font-size: 13;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
-}
-
-/* Search result line styles - bright blue text */
+/* Search result line styles - blue background with normal text size */
 .search-result-line {
-    -fx-fill: #0047AB;
-    -fx-font-weight: bold;
-    -fx-underline: true;
+    -fx-fill: #000000;
+    -fx-background-color: #4A90E2;
 }
 
-.search-result-line.search-highlight {
-    -fx-fill: #1E90FF;
-    -fx-font-weight: bold;
-    -fx-underline: true;
-}
-
-/* Current search match line - bright yellow */
+/* Current search match line - darker blue background */
 .search-current-line {
-    -fx-fill: #FFD700;
-    -fx-font-weight: bold;
-    -fx-underline: true;
-}
-
-.search-current-line.search-highlight {
-    -fx-fill: #FFD700;
-    -fx-font-weight: bold;
-    -fx-underline: true;
+    -fx-fill: #FFFFFF;
+    -fx-background-color: #0047AB;
 }
 
 /* Modern Action Buttons - Gray/White Theme */
