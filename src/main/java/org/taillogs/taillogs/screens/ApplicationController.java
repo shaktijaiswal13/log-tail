@@ -341,6 +341,10 @@ public class ApplicationController {
             rightPanelController.setOnHighlightsChanged(this::reapplyHighlighting);
             rightPanelController.setOnFiltersChanged(this::applyFilteringToContent);
 
+            // Add toggle button first (so it's always visible)
+            System.out.println("Adding toggle button to rightPanelContainer...");
+            rightPanelContainer.getChildren().add(togglePanelBtn);
+
             // Add TabPane to the container
             System.out.println("Adding TabPane to rightPanelContainer...");
             rightPanelContainer.getChildren().add(tabPane);
