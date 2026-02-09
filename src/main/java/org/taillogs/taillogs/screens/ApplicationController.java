@@ -178,37 +178,10 @@ public class ApplicationController {
     }
     
     private void updateButtonState() {
-        if (!pauseMode) {
-            // Tailing is active, make button classic medium grey
-            pauseBtn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #C0C0C0, #A8A8A8); " +
-                "-fx-border-color: #909090; " +
-                "-fx-text-fill: #333333; " +
-                "-fx-padding: 8 18 8 18; " +
-                "-fx-font-size: 11px; " +
-                "-fx-font-weight: 600; " +
-                "-fx-border-width: 1px; " +
-                "-fx-background-radius: 6px; " +
-                "-fx-border-radius: 6px; " +
-                "-fx-cursor: hand; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 4, 0, 0, 2);"
-            );
-        } else {
-            // Tailing is paused, show light grey (same as Clear/Refresh buttons)
-            pauseBtn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #F8F8F8, #E8E8E8); " +
-                "-fx-text-fill: #333333; " +
-                "-fx-border-color: #CCCCCC; " +
-                "-fx-padding: 8 18 8 18; " +
-                "-fx-font-size: 11px; " +
-                "-fx-font-weight: 600; " +
-                "-fx-border-width: 1px; " +
-                "-fx-background-radius: 6px; " +
-                "-fx-border-radius: 6px; " +
-                "-fx-cursor: hand; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 3, 0, 0, 1);"
-            );
-        }
+        // Use CSS classes for styling instead of inline styles
+        // This allows the button to look consistent with other buttons (Clear, Refresh)
+        pauseBtn.getStyleClass().remove("active");
+        // Always keep the same appearance - no special styling for pause state
     }
 
     private void setupUI() {
