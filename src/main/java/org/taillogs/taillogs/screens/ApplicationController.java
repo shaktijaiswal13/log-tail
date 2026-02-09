@@ -58,8 +58,6 @@ public class ApplicationController {
     @FXML
     private Label fileInfoLabel;
     @FXML
-    private Button togglePanelBtn;
-    @FXML
     private Button pauseBtn;
     @FXML
     private Button clearBtn;
@@ -141,17 +139,6 @@ public class ApplicationController {
         System.out.println("About to call setupRightPanel()...");
         setupRightPanel();
         System.out.println("setupRightPanel() completed");
-
-        // Initialize panel to expanded state
-        sidebarVisible = true;
-        if (rightPanelContainer != null) {
-            rightPanelContainer.setPrefWidth(320);
-            rightPanelContainer.setMinWidth(50);
-            rightPanelContainer.setMaxWidth(600);
-        }
-        if (togglePanelBtn != null) {
-            togglePanelBtn.setText("◀");
-        }
     }
 
     public void applyAppearanceSettings(AppearanceSettings settings) {
@@ -327,25 +314,9 @@ public class ApplicationController {
             Tab bookmarksTab = new Tab("Bookmarks", bookmarksContent);
             bookmarksTab.setClosable(false);
 
-            // Create a toggle button tab as the first tab
-            System.out.println("Creating toggle button as first tab...");
-            Tab toggleTab = new Tab();
-            toggleTab.setText("◀");
-            toggleTab.setStyle("-fx-padding: 4; -fx-font-size: 12px;");
-            toggleTab.setClosable(false);
-            VBox toggleTabContent = new VBox();
-            toggleTabContent.setStyle("-fx-background-color: transparent;");
-            toggleTab.setContent(toggleTabContent);
-            toggleTab.setOnSelectionChanged(event -> {
-                if (toggleTab.isSelected()) {
-                    onToggleRightPanel();
-                    tabPane.getSelectionModel().selectFirst();
-                }
-            });
-
-            // Add all tabs to TabPane (toggle button tab first)
+            // Add all tabs to TabPane
             System.out.println("Adding tabs to TabPane...");
-            tabPane.getTabs().addAll(toggleTab, highlightsTab, filtersTab, bookmarksTab);
+            tabPane.getTabs().addAll(highlightsTab, filtersTab, bookmarksTab);
             System.out.println("Tabs added: " + tabPane.getTabs().size());
 
             // Wire UI components to the RightPanelController
@@ -513,43 +484,6 @@ public class ApplicationController {
             });
             statusLabel.setText("Tailing: " + new File(currentFilePath).getName());
             originalLogContent = logArea.getText();
-        }
-    }
-
-    @FXML
-    protected void onToggleRightPanel() {
-        sidebarVisible = !sidebarVisible;
-
-        if (sidebarVisible) {
-            // Expand panel to full width
-            rightPanelContainer.setPrefWidth(320);
-            rightPanelContainer.setMinWidth(50);
-            rightPanelContainer.setMaxWidth(600);
-            togglePanelBtn.setText("◀");
-
-            // Show all tabs
-            if (rightPanelController != null && rightPanelController.tabPane != null) {
-                for (int i = 1; i < rightPanelController.tabPane.getTabs().size(); i++) {
-                    rightPanelController.tabPane.getTabs().get(i).setDisable(false);
-                    rightPanelController.tabPane.getTabs().get(i).setStyle("");
-                }
-            }
-        } else {
-            // Collapse panel to narrow width (20 pixels - just enough for button)
-            rightPanelContainer.setPrefWidth(20);
-            rightPanelContainer.setMinWidth(20);
-            rightPanelContainer.setMaxWidth(20);
-            togglePanelBtn.setText("▶");
-
-            // Hide all tabs except the first one (toggle button)
-            if (rightPanelController != null && rightPanelController.tabPane != null) {
-                for (int i = 1; i < rightPanelController.tabPane.getTabs().size(); i++) {
-                    rightPanelController.tabPane.getTabs().get(i).setDisable(true);
-                    rightPanelController.tabPane.getTabs().get(i).setStyle("-fx-display: none;");
-                }
-                // Make sure the toggle tab is selected
-                rightPanelController.tabPane.getSelectionModel().selectFirst();
-            }
         }
     }
 
