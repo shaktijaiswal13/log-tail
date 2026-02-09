@@ -492,13 +492,19 @@ public class ApplicationController {
     @FXML
     protected void onToggleRightPanel() {
         sidebarVisible = !sidebarVisible;
-        rightPanelContainer.setManaged(sidebarVisible);
-        rightPanelContainer.setVisible(sidebarVisible);
 
         // Update button text to show state
         if (sidebarVisible) {
+            // Expand panel to full width
+            rightPanelContainer.setPrefWidth(320);
+            rightPanelContainer.setMinWidth(280);
+            rightPanelContainer.setMaxWidth(400);
             togglePanelBtn.setText("◀");
         } else {
+            // Collapse panel to narrow width (5 pixels)
+            rightPanelContainer.setPrefWidth(5);
+            rightPanelContainer.setMinWidth(5);
+            rightPanelContainer.setMaxWidth(5);
             togglePanelBtn.setText("▶");
         }
     }

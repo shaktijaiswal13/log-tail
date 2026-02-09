@@ -33,7 +33,7 @@
             <!-- Control Bar -->
             <HBox spacing="15.0" style="-fx-background-color: #f8f8f8; -fx-padding: 10 15 10 15; -fx-border-color: #eeeeee; -fx-border-width: 0 0 1 0;">
                 <!-- Left Controls -->
-                <Label fx:id="fileInfoLabel" text="Ready" style="-fx-font-size: 10; -fx-text-fill: #666666;"/>
+                <Label fx:id="fileInfoLabel" text="Log Tail" style="-fx-font-size: 10; -fx-text-fill: #666666;"/>
 
                 <!-- Right Controls -->
                 <Region HBox.hgrow="ALWAYS"/>
@@ -74,11 +74,14 @@
             </HBox>
 
             <!-- Text Display Area with VirtualizedScrollPane -->
-            <VirtualizedScrollPane VBox.vgrow="ALWAYS">
+            <VirtualizedScrollPane VBox.vgrow="ALWAYS"
+                                   style="-fx-highlight-fill: yellow; -fx-highlight-text-fill: red"
+            >
                 <content>
                     <CodeArea fx:id="logArea"
                               editable="false"
                               wrapText="false"
+                              style="-fx-highlight-fill: yellow; -fx-highlight-text-fill: red"
                               styleClass="code-area"/>
                 </content>
             </VirtualizedScrollPane>
