@@ -920,6 +920,12 @@ public class ApplicationController {
         tab.setOnMouseClicked(event -> {
             if (event.getButton() == javafx.scene.input.MouseButton.PRIMARY && !event.getTarget().equals(closeTab)) {
                 currentFilePath = filePath;
+
+                // Update managers to load this file's specific settings
+                highlightManager.setCurrentFile(filePath);
+                filterManager.setCurrentFile(filePath);
+                bookmarkManager.setCurrentFile(filePath);
+
                 tailThreadRef.setActive(false);
                 pauseMode = false;
                 updateButtonStyles();

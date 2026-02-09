@@ -131,15 +131,9 @@ public class FilterManager {
         List<FilterRule> loaded;
 
         if (currentFilePath != null) {
-            // Load per-file rules
+            // Load per-file rules - start fresh for each file
             loaded = PreferencesManager.loadFilterRules(currentFilePath);
-            if (loaded.isEmpty()) {
-                // Fall back to global rules if per-file doesn't exist
-                List<FilterRule> globalRules = PreferencesManager.loadFilterRules();
-                if (!globalRules.isEmpty()) {
-                    loaded = globalRules;
-                }
-            }
+            // Don't fall back to global rules - each file manages its own rules
         } else {
             // Load global rules if no current file
             loaded = PreferencesManager.loadFilterRules();

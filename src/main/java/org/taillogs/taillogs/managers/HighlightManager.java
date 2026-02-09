@@ -346,16 +346,9 @@ public class HighlightManager {
         List<HighlightPattern> loaded;
 
         if (currentFilePath != null) {
-            // Load per-file patterns
+            // Load per-file patterns - start fresh for each file
             loaded = PreferencesManager.loadHighlightPatterns(currentFilePath);
-            if (loaded.isEmpty()) {
-                // Fall back to global patterns if per-file doesn't exist
-                List<HighlightPattern> globalPatterns = PreferencesManager.loadHighlightPatterns();
-                if (!globalPatterns.isEmpty()) {
-                    System.out.println("[HighlightManager] No per-file patterns found, using global patterns as defaults");
-                    loaded = globalPatterns;
-                }
-            }
+            // Don't fall back to global patterns - each file manages its own patterns
         } else {
             // Load global patterns if no current file
             loaded = PreferencesManager.loadHighlightPatterns();
