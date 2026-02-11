@@ -7,17 +7,18 @@ public class FontStylesUtil {
     public static String getLogTextAreaStyle(AppearanceSettings settings) {
         String fontWeightStyle = settings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
         String backgroundColor = settings.getCodeAreaBackgroundColor();
-        return "-fx-font-family: 'Courier New'; -fx-font-size: " + settings.getFontSize() + "; " +
+        return "-fx-font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Courier New', monospace; " +
+                "-fx-font-size: " + settings.getFontSize() + "; " +
                 fontWeightStyle +
-                "-fx-padding: 5; -fx-text-fill: #000000; " +
+                "-fx-padding: 8 10 8 10; -fx-text-fill: #1F2933; " +
                 "-fx-background-color: " + backgroundColor + ";";
     }
 
     public static String getMenuBarStyle(AppearanceSettings settings) {
         String fontWeightStyle = settings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
-        return "-fx-background-color: #2196F3; " +
+        return "-fx-background-color: linear-gradient(to right, #264653, #2A9D8F); " +
                 "-fx-text-fill: white; " +
-                "-fx-font-size: " + (settings.getFontSize() - 2) + "; " +
+                "-fx-font-size: " + (settings.getFontSize() - 1) + "; " +
                 fontWeightStyle +
                 "-fx-padding: 5px;";
     }
@@ -35,14 +36,17 @@ public class FontStylesUtil {
     public static String getStatusLabelStyle(AppearanceSettings settings) {
         String fontWeightStyle = settings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
         return "-fx-font-size: " + (settings.getFontSize() - 2) + "; " +
-                "-fx-text-fill: #666666; " +
+                "-fx-text-fill: #5A6B7A; " +
                 fontWeightStyle;
     }
 
     public static String getSearchFieldStyle(AppearanceSettings settings) {
         String fontWeightStyle = settings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
-        return "-fx-font-size: " + (settings.getFontSize() - 2) + "; " +
-                "-fx-padding: 5; -fx-border-color: #cccccc; -fx-border-width: 1; " +
+        return "-fx-font-size: " + (settings.getFontSize() - 1) + "; " +
+                "-fx-padding: 7 10 7 10; " +
+                "-fx-background-color: #F3F6F9; " +
+                "-fx-border-color: #D8DEE5; " +
+                "-fx-border-radius: 8px; -fx-background-radius: 8px; " +
                 fontWeightStyle;
     }
 

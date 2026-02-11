@@ -179,19 +179,15 @@ public class ApplicationController {
     
     private void updateButtonState() {
         if (!pauseMode) {
-            // Tailing is active - show darker color
-            pauseBtn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #A8A8A8, #909090); " +
-                "-fx-border-color: #707070; " +
-                "-fx-text-fill: #FFFFFF;"
-            );
+            pauseBtn.getStyleClass().removeAll("toolbar-neutral");
+            if (!pauseBtn.getStyleClass().contains("toolbar-primary")) {
+                pauseBtn.getStyleClass().add("toolbar-primary");
+            }
         } else {
-            // Tailing is paused - show light gray like other buttons
-            pauseBtn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #F8F8F8, #E8E8E8); " +
-                "-fx-border-color: #CCCCCC; " +
-                "-fx-text-fill: #333333;"
-            );
+            pauseBtn.getStyleClass().removeAll("toolbar-primary");
+            if (!pauseBtn.getStyleClass().contains("toolbar-neutral")) {
+                pauseBtn.getStyleClass().add("toolbar-neutral");
+            }
         }
     }
 
@@ -1085,35 +1081,19 @@ public class ApplicationController {
     // Create a single tab for a file
     private HBox createTab(String filePath) {
         HBox tab = new HBox(4);
-        tab.setStyle(
-            "-fx-padding: 6 8 6 8; " +
-            "-fx-background-color: #e8e8e8; " +
-            "-fx-border-color: #cccccc; " +
-            "-fx-border-width: 0 1 1 0; " +
-            "-fx-alignment: CENTER_LEFT; " +
-            "-fx-cursor: hand;"
-        );
+        tab.getStyleClass().add("file-tab");
         tab.setCursor(Cursor.HAND);
 
         // File name label
         Label fileName = new Label(new File(filePath).getName());
         int tabFontSize = Math.max(11, appearanceSettings.getFontSize() - 2);
         String tabFontWeightStyle = appearanceSettings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
-        fileName.setStyle("-fx-font-size: " + tabFontSize + "; -fx-text-fill: #333333; " + tabFontWeightStyle);
+        fileName.setStyle("-fx-font-size: " + tabFontSize + "; " + tabFontWeightStyle);
+        fileName.getStyleClass().add("file-tab-label");
 
         // Close button
         Button closeTab = new Button("\u2715");
-        closeTab.setStyle(
-            "-fx-padding: 3 5 3 5; " +
-            "-fx-font-size: 12; " +
-            "-fx-background-color: white; " +
-            "-fx-text-fill: black; " +
-            "-fx-border-width: 0; " +
-            "-fx-border-radius: 0; " +
-            "-fx-min-width: 26; " +
-            "-fx-min-height: 24; " +
-            "-fx-cursor: hand;"
-        );
+        closeTab.getStyleClass().add("file-tab-close");
         closeTab.setCursor(Cursor.HAND);
 
         closeTab.setOnAction(event -> closeFile(filePath));
@@ -1140,14 +1120,8 @@ public class ApplicationController {
 
         // Highlight active tab
         if (filePath.equals(currentFilePath)) {
-            tab.setStyle(
-                "-fx-padding: 6 8 6 8; " +
-                "-fx-background-color: #ffffff; " +
-                "-fx-border-color: #2196F3 #cccccc #ffffff #cccccc; " +
-                "-fx-border-width: 2 1 0 1; " +
-                "-fx-alignment: CENTER_LEFT;"
-            );
-            fileName.setStyle("-fx-font-size: " + (tabFontSize + 1) + "; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+            tab.getStyleClass().add("file-tab-active");
+            fileName.setStyle("-fx-font-size: " + (tabFontSize + 1) + "; -fx-font-weight: bold;");
         }
 
         return tab;
