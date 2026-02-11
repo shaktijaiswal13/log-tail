@@ -7,6 +7,7 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.taillogs.taillogs.config.PreferencesManager;
+import org.taillogs.taillogs.config.ProjectSettings;
 import org.taillogs.taillogs.models.HighlightPattern;
 
 import java.io.File;
@@ -15,10 +16,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +32,7 @@ public class HighlightManager {
     private String currentCssPath = null;
     private long cssVersion = 0;
     private String currentFilePath;
+    private final Map<String, Boolean> projectEnabledDefaults = new HashMap<>();
 
     public HighlightManager() {
         this.patterns = FXCollections.observableArrayList();
@@ -44,13 +48,17 @@ public class HighlightManager {
     public void addPattern(HighlightPattern pattern) {
         System.out.println("[HighlightManager] Adding pattern: " + pattern.getPattern() + " with color: " + pattern.getColor());
         patterns.add(pattern);
-        savePatterns();
+        projectEnabledDefaults.put(pattern.getId(), pattern.isEnabled());
+        saveProjectPatterns();
+        savePatternStates();
     }
 
     public void removePattern(String patternId) {
         System.out.println("[HighlightManager] Removing pattern: " + patternId);
         patterns.removeIf(p -> p.getId().equals(patternId));
-        savePatterns();
+        projectEnabledDefaults.remove(patternId);
+        saveProjectPatterns();
+        savePatternStates();
     }
 
     public void togglePattern(String patternId) {
@@ -60,7 +68,7 @@ public class HighlightManager {
                 .ifPresent(p -> {
                     p.setEnabled(!p.isEnabled());
                     System.out.println("[HighlightManager] Toggled pattern " + p.getPattern() + " to enabled=" + p.isEnabled());
-                    savePatterns();
+                    savePatternStates();
                 });
     }
 
@@ -70,7 +78,9 @@ public class HighlightManager {
 
     public void clearPatterns() {
         patterns.clear();
-        savePatterns();
+        projectEnabledDefaults.clear();
+        saveProjectPatterns();
+        savePatternStates();
     }
 
     /**
@@ -373,32 +383,96 @@ public class HighlightManager {
 
     private void loadPatterns() {
         patterns.clear();
-        List<HighlightPattern> loaded;
+        ProjectSettings projectSettings = PreferencesManager.loadProjectSettings();
+        List<HighlightPattern> loaded = projectSettings.getHighlights();
 
-        if (currentFilePath != null) {
-            // Load per-file patterns - start fresh for each file
-            loaded = PreferencesManager.loadHighlightPatterns(currentFilePath);
-            // Don't fall back to global patterns - each file manages its own patterns
-        } else {
-            // Load global patterns if no current file
-            loaded = PreferencesManager.loadHighlightPatterns();
+        if (loaded.isEmpty()) {
+            List<HighlightPattern> legacyGlobal = PreferencesManager.loadHighlightPatterns();
+            if (!legacyGlobal.isEmpty()) {
+                loaded = legacyGlobal;
+                projectSettings.setHighlights(legacyGlobal);
+                PreferencesManager.saveProjectSettings(projectSettings);
+            }
+        }
+        patterns.addAll(loaded);
+
+        projectEnabledDefaults.clear();
+        for (HighlightPattern pattern : patterns) {
+            projectEnabledDefaults.put(pattern.getId(), pattern.isEnabled());
         }
 
-        patterns.addAll(loaded);
-        System.out.println("[HighlightManager] Loaded " + loaded.size() + " patterns for file: " + currentFilePath);
+        if (currentFilePath != null) {
+            Map<String, Boolean> states = PreferencesManager.loadHighlightStates(currentFilePath);
+
+            if (states.isEmpty()) {
+                List<HighlightPattern> legacy = PreferencesManager.loadHighlightPatterns(currentFilePath);
+                if (!legacy.isEmpty()) {
+                    for (HighlightPattern legacyPattern : legacy) {
+                        boolean exists = patterns.stream().anyMatch(p -> p.getId().equals(legacyPattern.getId()));
+                        if (!exists) {
+                            patterns.add(legacyPattern);
+                            projectEnabledDefaults.put(legacyPattern.getId(), legacyPattern.isEnabled());
+                        }
+                        states.put(legacyPattern.getId(), legacyPattern.isEnabled());
+                    }
+                    saveProjectPatterns();
+                    PreferencesManager.saveHighlightStates(currentFilePath, states);
+                }
+            }
+
+            for (HighlightPattern pattern : patterns) {
+                if (states.containsKey(pattern.getId())) {
+                    pattern.setEnabled(states.get(pattern.getId()));
+                } else {
+                    pattern.setEnabled(projectEnabledDefaults.getOrDefault(pattern.getId(), true));
+                }
+            }
+        }
+
+        System.out.println("[HighlightManager] Loaded " + patterns.size() + " patterns for file: " + currentFilePath);
     }
 
-    public void savePatterns() {
-        List<HighlightPattern> patternsCopy = new ArrayList<>(patterns);
-
-        if (currentFilePath != null) {
-            // Save per-file patterns
-            PreferencesManager.saveHighlightPatterns(currentFilePath, patternsCopy);
-        } else {
-            // Save global patterns if no current file
-            PreferencesManager.saveHighlightPatterns(patternsCopy);
+    public void saveProjectPatterns() {
+        List<HighlightPattern> patternsCopy = new ArrayList<>();
+        for (HighlightPattern pattern : patterns) {
+            HighlightPattern copy = new HighlightPattern();
+            copy.setId(pattern.getId());
+            copy.setPattern(pattern.getPattern());
+            copy.setColor(pattern.getColor());
+            copy.setRegex(pattern.isRegex());
+            copy.setEnabled(projectEnabledDefaults.getOrDefault(pattern.getId(), true));
+            patternsCopy.add(copy);
         }
-        System.out.println("[HighlightManager] Saved " + patterns.size() + " patterns for file: " + currentFilePath);
+
+        ProjectSettings projectSettings = new ProjectSettings();
+        projectSettings.setHighlights(patternsCopy);
+        projectSettings.setFilters(PreferencesManager.loadProjectSettings().getFilters());
+        PreferencesManager.saveProjectSettings(projectSettings);
+        System.out.println("[HighlightManager] Saved " + patternsCopy.size() + " project highlight patterns");
+    }
+
+    public void savePatternStates() {
+        if (currentFilePath == null) {
+            return;
+        }
+        Map<String, Boolean> states = new HashMap<>();
+        for (HighlightPattern pattern : patterns) {
+            states.put(pattern.getId(), pattern.isEnabled());
+        }
+        PreferencesManager.saveHighlightStates(currentFilePath, states);
+        System.out.println("[HighlightManager] Saved highlight states for file: " + currentFilePath);
+    }
+
+    public void updatePattern(HighlightPattern updated) {
+        for (HighlightPattern pattern : patterns) {
+            if (pattern.getId().equals(updated.getId())) {
+                pattern.setPattern(updated.getPattern());
+                pattern.setColor(updated.getColor());
+                pattern.setRegex(updated.isRegex());
+                saveProjectPatterns();
+                break;
+            }
+        }
     }
 
     private static class Match {

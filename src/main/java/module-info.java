@@ -7,7 +7,7 @@ module org.taillogs.taillogs {
 
     opens org.taillogs.taillogs to javafx.fxml;
     opens org.taillogs.taillogs.screens to javafx.fxml;
-    opens org.taillogs.taillogs.config to javafx.fxml;
+    opens org.taillogs.taillogs.config to javafx.fxml, com.google.gson;
     opens org.taillogs.taillogs.ui to javafx.fxml;
     opens org.taillogs.taillogs.models to com.google.gson;
 

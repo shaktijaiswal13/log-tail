@@ -93,7 +93,7 @@ public class RightPanelController {
                     checkbox.setSelected(pattern.isEnabled());
                     checkbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                         pattern.setEnabled(newVal);
-                        highlightManager.savePatterns();  // Save the state change
+                        highlightManager.savePatternStates();
                         System.out.println("[RightPanelController] Pattern toggled: " + pattern.getPattern() + " enabled=" + newVal);
                         if (onHighlightsChanged != null) {
                             System.out.println("[RightPanelController] Calling onHighlightsChanged callback");
@@ -108,8 +108,7 @@ public class RightPanelController {
                         String newColor = colorPicker.getValue().toString().replace("0x", "#");
                         System.out.println("[RightPanelController] Color changed for pattern: " + pattern.getPattern() + " to " + newColor);
                         pattern.setColor(newColor);
-                        highlightManager.removePattern(pattern.getId());
-                        highlightManager.addPattern(pattern);
+                        highlightManager.updatePattern(pattern);
                         if (onHighlightsChanged != null) {
                             System.out.println("[RightPanelController] Calling onHighlightsChanged callback");
                             onHighlightsChanged.run();
@@ -231,7 +230,7 @@ public class RightPanelController {
                     checkbox.setSelected(rule.isEnabled());
                     checkbox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                         rule.setEnabled(newVal);
-                        filterManager.saveRules();  // Save the state change
+                        filterManager.saveRuleStates();
                         System.out.println("[RightPanelController] Rule toggled: " + rule.getPattern() + " enabled=" + newVal);
                         if (onFiltersChanged != null) onFiltersChanged.run();
                     });

@@ -3,16 +3,20 @@ package org.taillogs.taillogs.managers;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.taillogs.taillogs.config.PreferencesManager;
+import org.taillogs.taillogs.config.ProjectSettings;
 import org.taillogs.taillogs.models.FilterRule;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class FilterManager {
     private final ObservableList<FilterRule> rules;
     private String currentFilePath;
+    private final Map<String, Boolean> projectEnabledDefaults = new HashMap<>();
 
     public FilterManager() {
         this.rules = FXCollections.observableArrayList();
@@ -25,12 +29,16 @@ public class FilterManager {
 
     public void addRule(FilterRule rule) {
         rules.add(rule);
-        saveRules();
+        projectEnabledDefaults.put(rule.getId(), rule.isEnabled());
+        saveProjectRules();
+        saveRuleStates();
     }
 
     public void removeRule(String ruleId) {
         rules.removeIf(r -> r.getId().equals(ruleId));
-        saveRules();
+        projectEnabledDefaults.remove(ruleId);
+        saveProjectRules();
+        saveRuleStates();
     }
 
     public void toggleRule(String ruleId) {
@@ -39,7 +47,7 @@ public class FilterManager {
                 .findFirst()
                 .ifPresent(r -> {
                     r.setEnabled(!r.isEnabled());
-                    saveRules();
+                    saveRuleStates();
                 });
     }
 
@@ -49,7 +57,9 @@ public class FilterManager {
 
     public void clearRules() {
         rules.clear();
-        saveRules();
+        projectEnabledDefaults.clear();
+        saveProjectRules();
+        saveRuleStates();
     }
 
     /**
@@ -128,30 +138,79 @@ public class FilterManager {
 
     private void loadRules() {
         rules.clear();
-        List<FilterRule> loaded;
+        ProjectSettings projectSettings = PreferencesManager.loadProjectSettings();
+        List<FilterRule> loaded = projectSettings.getFilters();
 
-        if (currentFilePath != null) {
-            // Load per-file rules - start fresh for each file
-            loaded = PreferencesManager.loadFilterRules(currentFilePath);
-            // Don't fall back to global rules - each file manages its own rules
-        } else {
-            // Load global rules if no current file
-            loaded = PreferencesManager.loadFilterRules();
+        if (loaded.isEmpty()) {
+            List<FilterRule> legacyGlobal = PreferencesManager.loadFilterRules();
+            if (!legacyGlobal.isEmpty()) {
+                loaded = legacyGlobal;
+                projectSettings.setFilters(legacyGlobal);
+                PreferencesManager.saveProjectSettings(projectSettings);
+            }
+        }
+        rules.addAll(loaded);
+
+        projectEnabledDefaults.clear();
+        for (FilterRule rule : rules) {
+            projectEnabledDefaults.put(rule.getId(), rule.isEnabled());
         }
 
-        rules.addAll(loaded);
+        if (currentFilePath != null) {
+            Map<String, Boolean> states = PreferencesManager.loadFilterStates(currentFilePath);
+
+            if (states.isEmpty()) {
+                List<FilterRule> legacy = PreferencesManager.loadFilterRules(currentFilePath);
+                if (!legacy.isEmpty()) {
+                    for (FilterRule legacyRule : legacy) {
+                        boolean exists = rules.stream().anyMatch(r -> r.getId().equals(legacyRule.getId()));
+                        if (!exists) {
+                            rules.add(legacyRule);
+                            projectEnabledDefaults.put(legacyRule.getId(), legacyRule.isEnabled());
+                        }
+                        states.put(legacyRule.getId(), legacyRule.isEnabled());
+                    }
+                    saveProjectRules();
+                    PreferencesManager.saveFilterStates(currentFilePath, states);
+                }
+            }
+
+            for (FilterRule rule : rules) {
+                if (states.containsKey(rule.getId())) {
+                    rule.setEnabled(states.get(rule.getId()));
+                } else {
+                    rule.setEnabled(projectEnabledDefaults.getOrDefault(rule.getId(), true));
+                }
+            }
+        }
     }
 
-    public void saveRules() {
-        List<FilterRule> rulesCopy = new ArrayList<>(rules);
-
-        if (currentFilePath != null) {
-            // Save per-file rules
-            PreferencesManager.saveFilterRules(currentFilePath, rulesCopy);
-        } else {
-            // Save global rules if no current file
-            PreferencesManager.saveFilterRules(rulesCopy);
+    public void saveProjectRules() {
+        List<FilterRule> rulesCopy = new ArrayList<>();
+        for (FilterRule rule : rules) {
+            FilterRule copy = new FilterRule();
+            copy.setId(rule.getId());
+            copy.setPattern(rule.getPattern());
+            copy.setRegex(rule.isRegex());
+            copy.setEnabled(projectEnabledDefaults.getOrDefault(rule.getId(), true));
+            rulesCopy.add(copy);
         }
+
+        ProjectSettings projectSettings = new ProjectSettings();
+        projectSettings.setFilters(rulesCopy);
+        projectSettings.setHighlights(PreferencesManager.loadProjectSettings().getHighlights());
+        PreferencesManager.saveProjectSettings(projectSettings);
+    }
+
+    public void saveRuleStates() {
+        if (currentFilePath == null) {
+            return;
+        }
+        Map<String, Boolean> states = new HashMap<>();
+        for (FilterRule rule : rules) {
+            states.put(rule.getId(), rule.isEnabled());
+        }
+        PreferencesManager.saveFilterStates(currentFilePath, states);
     }
 
     /**

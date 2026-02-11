@@ -23,6 +23,7 @@ public class PreferencesManager {
     private static final String PREFS_FILE = PREFS_DIR + File.separator + "preferences.txt";
     private static final String HIGHLIGHTS_FILE = PREFS_DIR + File.separator + "highlights.json";
     private static final String FILTERS_FILE = PREFS_DIR + File.separator + "filters.json";
+    private static final String PROJECT_SETTINGS_FILE = PREFS_DIR + File.separator + "project_settings.json";
     private static final String BOOKMARKS_FILE = PREFS_DIR + File.separator + "bookmarks.json";
     private static final String RECENT_FILES_FILE = PREFS_DIR + File.separator + "recent_files.json";
     private static final int MAX_RECENT_FILES = 10;
@@ -62,6 +63,33 @@ public class PreferencesManager {
         } catch (IOException e) {
             System.err.println("Failed to save preferences: " + e.getMessage());
         }
+    }
+
+    // Project settings methods
+    public static void saveProjectSettings(ProjectSettings settings) {
+        try {
+            String json = gson.toJson(settings);
+            Files.write(Paths.get(PROJECT_SETTINGS_FILE), json.getBytes());
+        } catch (IOException e) {
+            System.err.println("Failed to save project settings: " + e.getMessage());
+        }
+    }
+
+    public static ProjectSettings loadProjectSettings() {
+        try {
+            File file = new File(PROJECT_SETTINGS_FILE);
+            if (file.exists()) {
+                String content = new String(Files.readAllBytes(Paths.get(PROJECT_SETTINGS_FILE)));
+                ProjectSettings settings = gson.fromJson(content, ProjectSettings.class);
+                if (settings != null) {
+                    settings.ensureDefaults();
+                    return settings;
+                }
+            }
+        } catch (IOException | com.google.gson.JsonSyntaxException e) {
+            System.err.println("Failed to load project settings: " + e.getMessage());
+        }
+        return new ProjectSettings();
     }
 
     // Highlight Pattern methods
@@ -112,6 +140,63 @@ public class PreferencesManager {
             System.err.println("Failed to load filter rules: " + e.getMessage());
         }
         return new ArrayList<>();
+    }
+
+    // Per-file enabled state methods
+    public static void saveHighlightStates(String filePath, Map<String, Boolean> states) {
+        try {
+            String fileKey = encodeFileKey(filePath);
+            String statesFile = PREFS_DIR + File.separator + "highlight_states_" + fileKey + ".json";
+            String json = gson.toJson(states);
+            Files.write(Paths.get(statesFile), json.getBytes());
+        } catch (IOException e) {
+            System.err.println("Failed to save highlight states: " + e.getMessage());
+        }
+    }
+
+    public static Map<String, Boolean> loadHighlightStates(String filePath) {
+        try {
+            String fileKey = encodeFileKey(filePath);
+            String statesFile = PREFS_DIR + File.separator + "highlight_states_" + fileKey + ".json";
+            File file = new File(statesFile);
+            if (file.exists()) {
+                String content = new String(Files.readAllBytes(Paths.get(statesFile)));
+                Type mapType = new TypeToken<Map<String, Boolean>>() {}.getType();
+                Map<String, Boolean> states = gson.fromJson(content, mapType);
+                return states != null ? states : new HashMap<>();
+            }
+        } catch (IOException | com.google.gson.JsonSyntaxException e) {
+            System.err.println("Failed to load highlight states: " + e.getMessage());
+        }
+        return new HashMap<>();
+    }
+
+    public static void saveFilterStates(String filePath, Map<String, Boolean> states) {
+        try {
+            String fileKey = encodeFileKey(filePath);
+            String statesFile = PREFS_DIR + File.separator + "filter_states_" + fileKey + ".json";
+            String json = gson.toJson(states);
+            Files.write(Paths.get(statesFile), json.getBytes());
+        } catch (IOException e) {
+            System.err.println("Failed to save filter states: " + e.getMessage());
+        }
+    }
+
+    public static Map<String, Boolean> loadFilterStates(String filePath) {
+        try {
+            String fileKey = encodeFileKey(filePath);
+            String statesFile = PREFS_DIR + File.separator + "filter_states_" + fileKey + ".json";
+            File file = new File(statesFile);
+            if (file.exists()) {
+                String content = new String(Files.readAllBytes(Paths.get(statesFile)));
+                Type mapType = new TypeToken<Map<String, Boolean>>() {}.getType();
+                Map<String, Boolean> states = gson.fromJson(content, mapType);
+                return states != null ? states : new HashMap<>();
+            }
+        } catch (IOException | com.google.gson.JsonSyntaxException e) {
+            System.err.println("Failed to load filter states: " + e.getMessage());
+        }
+        return new HashMap<>();
     }
 
     // Bookmark methods
