@@ -475,6 +475,10 @@ public class HighlightManager {
         }
     }
 
+    public void reloadForCurrentFile() {
+        loadPatterns();
+    }
+
     private static class Match {
         int start;
         int end;

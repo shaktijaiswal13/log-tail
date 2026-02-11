@@ -14,6 +14,10 @@
                 <Button fx:id="addHighlightBtn" text="+ Add Highlight Pattern" styleClass="panel-button" />
                 <Separator />
                 <ListView fx:id="highlightsListView" VBox.vgrow="ALWAYS" prefHeight="300" styleClass="panel-list" />
+                <HBox spacing="8" alignment="CENTER">
+                    <Button fx:id="loadHighlightsBtn" text="Load Settings" styleClass="panel-button panel-button-wide" HBox.hgrow="ALWAYS" />
+                    <Button fx:id="saveHighlightsBtn" text="Save Settings" styleClass="panel-button panel-button-wide" HBox.hgrow="ALWAYS" />
+                </HBox>
             </VBox>
         </Tab>
 
@@ -24,6 +28,10 @@
                 <Separator />
                 <ListView fx:id="filtersListView" VBox.vgrow="ALWAYS" prefHeight="300" styleClass="panel-list" />
                 <Button fx:id="clearFiltersBtn" text="Clear All Filters" styleClass="panel-button" />
+                <HBox spacing="8" alignment="CENTER">
+                    <Button fx:id="loadFiltersBtn" text="Load Settings" styleClass="panel-button panel-button-wide" HBox.hgrow="ALWAYS" />
+                    <Button fx:id="saveFiltersBtn" text="Save Settings" styleClass="panel-button panel-button-wide" HBox.hgrow="ALWAYS" />
+                </HBox>
             </VBox>
         </Tab>
 

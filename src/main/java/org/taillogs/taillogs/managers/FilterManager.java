@@ -213,6 +213,10 @@ public class FilterManager {
         PreferencesManager.saveFilterStates(currentFilePath, states);
     }
 
+    public void reloadForCurrentFile() {
+        loadRules();
+    }
+
     /**
      * Represents a filtered line with original line number and content
      */

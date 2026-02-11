@@ -279,6 +279,14 @@
     -fx-background-color: #F4F7FA;
 }
 
+.panel-button-wide {
+    -fx-padding: 8 12;
+    -fx-font-size: 12px;
+    -fx-background-color: #E7EEF3;
+    -fx-border-color: #C7D1D9;
+    -fx-max-width: 100000;
+}
+
 .panel-list {
     -fx-background-color: #FFFFFF;
     -fx-border-color: #D0D9E0;

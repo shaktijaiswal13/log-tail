@@ -17,12 +17,15 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
+import javafx.geometry.Pos;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.Cursor;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.animation.AnimationTimer;
 
 import org.taillogs.taillogs.managers.BookmarkManager;
 import org.taillogs.taillogs.managers.FilterManager;
@@ -98,6 +101,9 @@ public class ApplicationController {
     private FilterManager filterManager;
     private BookmarkManager bookmarkManager;
     private RightPanelController rightPanelController;
+
+    private double pendingScrollDelta = 0.0;
+    private AnimationTimer smoothScrollTimer;
 
     public void initialize() {
         tailThreadRef = new TailThreadRef();
@@ -206,6 +212,41 @@ public class ApplicationController {
 
         // Setup hover effects for buttons
         setupButtonHoverEffects();
+
+        // Smooth scroll for log area
+        setupSmoothScrolling();
+    }
+
+    private void setupSmoothScrolling() {
+        smoothScrollTimer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                if (Math.abs(pendingScrollDelta) < 0.5) {
+                    pendingScrollDelta = 0.0;
+                    stop();
+                    return;
+                }
+
+                double step = pendingScrollDelta * 0.25;
+                if (Math.abs(step) < 1.0) {
+                    step = Math.copySign(1.0, step);
+                }
+
+                logArea.scrollYBy(-step);
+                pendingScrollDelta -= step;
+            }
+        };
+
+        logArea.addEventFilter(ScrollEvent.SCROLL, event -> {
+            if (event.getDeltaY() == 0 || event.isInertia()) {
+                return;
+            }
+            event.consume();
+            pendingScrollDelta += event.getDeltaY();
+            if (smoothScrollTimer != null) {
+                smoothScrollTimer.start();
+            }
+        });
     }
     
     private void setupButtonHoverEffects() {
@@ -254,8 +295,21 @@ public class ApplicationController {
             highlightsListView.setPrefHeight(Region.USE_COMPUTED_SIZE);
             highlightsListView.setPlaceholder(new Label("No highlight patterns defined.\nClick the button above to add one."));
             VBox.setVgrow(highlightsListView, Priority.ALWAYS);
+
+            Button loadHighlightsBtn = new Button("Load Settings");
+            loadHighlightsBtn.setMaxWidth(Double.MAX_VALUE);
+            loadHighlightsBtn.getStyleClass().addAll("panel-button", "panel-button-wide");
+
+            Button saveHighlightsBtn = new Button("Save Settings");
+            saveHighlightsBtn.setMaxWidth(Double.MAX_VALUE);
+            saveHighlightsBtn.getStyleClass().addAll("panel-button", "panel-button-wide");
+
+            HBox highlightActions = new HBox(8, loadHighlightsBtn, saveHighlightsBtn);
+            highlightActions.setAlignment(Pos.CENTER);
+            HBox.setHgrow(loadHighlightsBtn, Priority.ALWAYS);
+            HBox.setHgrow(saveHighlightsBtn, Priority.ALWAYS);
             
-            highlightsContent.getChildren().addAll(addHighlightBtn, new Separator(), highlightsListView);
+            highlightsContent.getChildren().addAll(addHighlightBtn, new Separator(), highlightsListView, highlightActions);
             Tab highlightsTab = new Tab("Highlights", highlightsContent);
             highlightsTab.setClosable(false);
 
@@ -280,8 +334,21 @@ public class ApplicationController {
             clearFiltersBtn.setMaxWidth(Double.MAX_VALUE);
             clearFiltersBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 6 12; -fx-cursor: hand;");
             clearFiltersBtn.setCursor(Cursor.HAND);
+
+            Button loadFiltersBtn = new Button("Load Settings");
+            loadFiltersBtn.setMaxWidth(Double.MAX_VALUE);
+            loadFiltersBtn.getStyleClass().addAll("panel-button", "panel-button-wide");
+
+            Button saveFiltersBtn = new Button("Save Settings");
+            saveFiltersBtn.setMaxWidth(Double.MAX_VALUE);
+            saveFiltersBtn.getStyleClass().addAll("panel-button", "panel-button-wide");
+
+            HBox filterActions = new HBox(8, loadFiltersBtn, saveFiltersBtn);
+            filterActions.setAlignment(Pos.CENTER);
+            HBox.setHgrow(loadFiltersBtn, Priority.ALWAYS);
+            HBox.setHgrow(saveFiltersBtn, Priority.ALWAYS);
             
-            filtersContent.getChildren().addAll(addFilterBtn, new Separator(), filtersListView, clearFiltersBtn);
+            filtersContent.getChildren().addAll(addFilterBtn, new Separator(), filtersListView, clearFiltersBtn, filterActions);
             Tab filtersTab = new Tab("Filters", filtersContent);
             filtersTab.setClosable(false);
 
@@ -319,10 +386,14 @@ public class ApplicationController {
             System.out.println("Wiring components to RightPanelController...");
             rightPanelController.tabPane = tabPane;
             rightPanelController.addHighlightBtn = addHighlightBtn;
+            rightPanelController.loadHighlightsBtn = loadHighlightsBtn;
+            rightPanelController.saveHighlightsBtn = saveHighlightsBtn;
             rightPanelController.highlightsListView = highlightsListView;
             rightPanelController.addFilterBtn = addFilterBtn;
+            rightPanelController.loadFiltersBtn = loadFiltersBtn;
             rightPanelController.filtersListView = filtersListView;
             rightPanelController.clearFiltersBtn = clearFiltersBtn;
+            rightPanelController.saveFiltersBtn = saveFiltersBtn;
             rightPanelController.bookmarksListView = bookmarksListView;
             rightPanelController.clearBookmarksBtn = clearBookmarksBtn;
 

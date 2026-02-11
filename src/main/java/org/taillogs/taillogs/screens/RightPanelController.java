@@ -24,10 +24,14 @@ import java.util.Optional;
 public class RightPanelController {
     public TabPane tabPane;
     public Button addHighlightBtn;
+    public Button loadHighlightsBtn;
+    public Button saveHighlightsBtn;
     public ListView<HighlightPattern> highlightsListView;
     public Button addFilterBtn;
+    public Button loadFiltersBtn;
     public ListView<FilterRule> filtersListView;
     public Button clearFiltersBtn;
+    public Button saveFiltersBtn;
     public ListView<Bookmark> bookmarksListView;
     public Button clearBookmarksBtn;
 
@@ -69,7 +73,14 @@ public class RightPanelController {
 
     private void setupHighlightsTab() {
         addHighlightBtn.setOnAction(e -> showAddHighlightDialog());
+        if (loadHighlightsBtn != null) {
+            loadHighlightsBtn.setOnAction(e -> reloadHighlights());
+        }
+        if (saveHighlightsBtn != null) {
+            saveHighlightsBtn.setOnAction(e -> highlightManager.saveProjectPatterns());
+        }
         highlightsListView.setCellFactory(this::createHighlightCell);
+        setupSaveHighlightsVisibility();
     }
 
     private void updateHighlightsList() {
@@ -206,11 +217,76 @@ public class RightPanelController {
             filterManager.clearRules();
             if (onFiltersChanged != null) onFiltersChanged.run();
         });
+        if (loadFiltersBtn != null) {
+            loadFiltersBtn.setOnAction(e -> reloadFilters());
+        }
+        if (saveFiltersBtn != null) {
+            saveFiltersBtn.setOnAction(e -> filterManager.saveProjectRules());
+        }
         filtersListView.setCellFactory(this::createFilterCell);
+        setupSaveFiltersVisibility();
     }
 
     private void updateFiltersList() {
         filtersListView.setItems(filterManager.getRules());
+    }
+
+    private void setupSaveHighlightsVisibility() {
+        if (saveHighlightsBtn == null || highlightManager == null) {
+            return;
+        }
+        updateSaveHighlightsVisibility();
+        highlightManager.getPatterns().addListener((javafx.collections.ListChangeListener<HighlightPattern>) change -> updateSaveHighlightsVisibility());
+    }
+
+    private void updateSaveHighlightsVisibility() {
+        if (highlightManager == null) {
+            return;
+        }
+        boolean hasItems = !highlightManager.getPatterns().isEmpty();
+        saveHighlightsBtn.setVisible(hasItems);
+        saveHighlightsBtn.setManaged(hasItems);
+    }
+
+    private void setupSaveFiltersVisibility() {
+        if (saveFiltersBtn == null || filterManager == null) {
+            return;
+        }
+        updateSaveFiltersVisibility();
+        filterManager.getRules().addListener((javafx.collections.ListChangeListener<FilterRule>) change -> updateSaveFiltersVisibility());
+    }
+
+    private void updateSaveFiltersVisibility() {
+        if (filterManager == null) {
+            return;
+        }
+        boolean hasItems = !filterManager.getRules().isEmpty();
+        saveFiltersBtn.setVisible(hasItems);
+        saveFiltersBtn.setManaged(hasItems);
+    }
+
+    private void reloadHighlights() {
+        if (highlightManager == null) {
+            return;
+        }
+        highlightManager.reloadForCurrentFile();
+        updateHighlightsList();
+        highlightsListView.refresh();
+        if (onHighlightsChanged != null) {
+            onHighlightsChanged.run();
+        }
+    }
+
+    private void reloadFilters() {
+        if (filterManager == null) {
+            return;
+        }
+        filterManager.reloadForCurrentFile();
+        updateFiltersList();
+        filtersListView.refresh();
+        if (onFiltersChanged != null) {
+            onFiltersChanged.run();
+        }
     }
 
     private ListCell<FilterRule> createFilterCell(ListView<FilterRule> list) {
