@@ -20,7 +20,7 @@
 
 .menu-bar .menu-button {
     -fx-background-color: transparent;
-    -fx-text-fill: #EAF2F6;
+    -fx-text-fill: #FFFFFF;
     -fx-font-size: 11px;
     -fx-font-weight: 600;
     -fx-padding: 6 10 6 10;
@@ -28,10 +28,33 @@
     -fx-background-insets: 0;
 }
 
+.menu-bar .menu-button .label {
+    -fx-text-fill: #FFFFFF;
+}
+
 .menu-bar .menu-button:hover,
 .menu-bar .menu-button:focused,
 .menu-bar .menu-button:showing {
     -fx-background-color: transparent;
+    -fx-text-fill: #0F1720;
+    -fx-underline: false;
+}
+
+.menu-bar .menu-button:hover .label,
+.menu-bar .menu-button:focused .label,
+.menu-bar .menu-button:showing .label {
+    -fx-text-fill: #0F1720;
+    -fx-underline: false;
+}
+
+.menu-item .label {
+    -fx-underline: false;
+}
+
+.menu-item:focused .label,
+.menu-item:hover .label,
+.menu-item:showing .label {
+    -fx-underline: false;
 }
 
 .control-bar {
