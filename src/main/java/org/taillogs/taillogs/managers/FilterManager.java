@@ -149,6 +149,14 @@ public class FilterManager {
                 PreferencesManager.saveProjectSettings(projectSettings);
             }
         }
+
+        if (currentFilePath != null) {
+            List<FilterRule> fileSpecific = PreferencesManager.loadFilterRules(currentFilePath);
+            if (!fileSpecific.isEmpty()) {
+                loaded = fileSpecific;
+            }
+        }
+
         rules.addAll(loaded);
 
         projectEnabledDefaults.clear();
@@ -158,22 +166,6 @@ public class FilterManager {
 
         if (currentFilePath != null) {
             Map<String, Boolean> states = PreferencesManager.loadFilterStates(currentFilePath);
-
-            if (states.isEmpty()) {
-                List<FilterRule> legacy = PreferencesManager.loadFilterRules(currentFilePath);
-                if (!legacy.isEmpty()) {
-                    for (FilterRule legacyRule : legacy) {
-                        boolean exists = rules.stream().anyMatch(r -> r.getId().equals(legacyRule.getId()));
-                        if (!exists) {
-                            rules.add(legacyRule);
-                            projectEnabledDefaults.put(legacyRule.getId(), legacyRule.isEnabled());
-                        }
-                        states.put(legacyRule.getId(), legacyRule.isEnabled());
-                    }
-                    saveProjectRules();
-                    PreferencesManager.saveFilterStates(currentFilePath, states);
-                }
-            }
 
             for (FilterRule rule : rules) {
                 if (states.containsKey(rule.getId())) {
@@ -214,6 +206,41 @@ public class FilterManager {
     }
 
     public void reloadForCurrentFile() {
+        loadRules();
+    }
+
+    public String getCurrentFilePath() {
+        return currentFilePath;
+    }
+
+    public void applyRulesToCurrentFile(List<FilterRule> newRules) {
+        if (currentFilePath == null) {
+            return;
+        }
+
+        List<FilterRule> normalized = new ArrayList<>();
+        if (newRules != null) {
+            for (FilterRule src : newRules) {
+                if (src == null) {
+                    continue;
+                }
+                FilterRule copy = new FilterRule();
+                copy.setId(src.getId() != null ? src.getId() : java.util.UUID.randomUUID().toString());
+                copy.setPattern(src.getPattern());
+                copy.setRegex(src.isRegex());
+                copy.setEnabled(src.isEnabled());
+                normalized.add(copy);
+            }
+        }
+
+        PreferencesManager.saveFilterRules(currentFilePath, normalized);
+
+        Map<String, Boolean> states = new HashMap<>();
+        for (FilterRule rule : normalized) {
+            states.put(rule.getId(), rule.isEnabled());
+        }
+        PreferencesManager.saveFilterStates(currentFilePath, states);
+
         loadRules();
     }
 

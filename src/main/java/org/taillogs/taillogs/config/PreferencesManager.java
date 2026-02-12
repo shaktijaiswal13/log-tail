@@ -7,6 +7,7 @@ import org.taillogs.taillogs.models.Bookmark;
 import org.taillogs.taillogs.models.FilterRule;
 import org.taillogs.taillogs.models.HighlightPattern;
 import org.taillogs.taillogs.models.RecentFile;
+import org.taillogs.taillogs.models.SavedSettingsProfile;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +15,8 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,7 @@ public class PreferencesManager {
     private static final String PROJECT_SETTINGS_FILE = PREFS_DIR + File.separator + "project_settings.json";
     private static final String BOOKMARKS_FILE = PREFS_DIR + File.separator + "bookmarks.json";
     private static final String RECENT_FILES_FILE = PREFS_DIR + File.separator + "recent_files.json";
+    private static final String SETTINGS_DIR = PREFS_DIR + File.separator + "settings";
     private static final int MAX_RECENT_FILES = 10;
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -34,6 +38,10 @@ public class PreferencesManager {
         File prefsDir = new File(PREFS_DIR);
         if (!prefsDir.exists()) {
             prefsDir.mkdirs();
+        }
+        File settingsDir = new File(SETTINGS_DIR);
+        if (!settingsDir.exists()) {
+            settingsDir.mkdirs();
         }
     }
 
@@ -349,6 +357,79 @@ public class PreferencesManager {
         }
     }
 
+    // Named settings profile methods
+    public static void saveNamedSettings(String name, List<HighlightPattern> highlights, List<FilterRule> filters) {
+        try {
+            String safeName = sanitizeSettingsName(name);
+            if (safeName.isEmpty()) {
+                return;
+            }
+
+            SavedSettingsProfile profile = new SavedSettingsProfile(
+                    name.trim(),
+                    System.currentTimeMillis(),
+                    highlights != null ? highlights : new ArrayList<>(),
+                    filters != null ? filters : new ArrayList<>()
+            );
+
+            String json = gson.toJson(profile);
+            String target = SETTINGS_DIR + File.separator + safeName + ".json";
+            Files.write(Paths.get(target), json.getBytes());
+        } catch (IOException e) {
+            System.err.println("Failed to save named settings: " + e.getMessage());
+        }
+    }
+
+    public static List<String> listNamedSettings() {
+        List<String> result = new ArrayList<>();
+        File settingsDir = new File(SETTINGS_DIR);
+        if (!settingsDir.exists() || !settingsDir.isDirectory()) {
+            return result;
+        }
+
+        File[] files = settingsDir.listFiles((dir, name) -> name.endsWith(".json"));
+        if (files == null) {
+            return result;
+        }
+
+        List<File> sortedFiles = new ArrayList<>();
+        Collections.addAll(sortedFiles, files);
+        sortedFiles.sort(Comparator.comparingLong(File::lastModified).reversed());
+
+        for (File file : sortedFiles) {
+            String fileName = file.getName();
+            if (fileName.endsWith(".json")) {
+                result.add(fileName.substring(0, fileName.length() - 5));
+            }
+        }
+        return result;
+    }
+
+    public static SavedSettingsProfile loadNamedSettings(String name) {
+        try {
+            String safeName = sanitizeSettingsName(name);
+            if (safeName.isEmpty()) {
+                return null;
+            }
+
+            String source = SETTINGS_DIR + File.separator + safeName + ".json";
+            File file = new File(source);
+            if (!file.exists()) {
+                return null;
+            }
+
+            String content = new String(Files.readAllBytes(Paths.get(source)));
+            SavedSettingsProfile profile = gson.fromJson(content, SavedSettingsProfile.class);
+            if (profile != null) {
+                profile.ensureDefaults();
+            }
+            return profile;
+        } catch (IOException | com.google.gson.JsonSyntaxException e) {
+            System.err.println("Failed to load named settings: " + e.getMessage());
+            return null;
+        }
+    }
+
     /**
      * Encode file path to safe filename
      */
@@ -358,5 +439,12 @@ public class PreferencesManager {
         }
         // Use hash of path to avoid special characters
         return Integer.toHexString(filePath.hashCode());
+    }
+
+    private static String sanitizeSettingsName(String name) {
+        if (name == null) {
+            return "";
+        }
+        return name.trim().replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 }

@@ -394,6 +394,14 @@ public class HighlightManager {
                 PreferencesManager.saveProjectSettings(projectSettings);
             }
         }
+
+        if (currentFilePath != null) {
+            List<HighlightPattern> fileSpecific = PreferencesManager.loadHighlightPatterns(currentFilePath);
+            if (!fileSpecific.isEmpty()) {
+                loaded = fileSpecific;
+            }
+        }
+
         patterns.addAll(loaded);
 
         projectEnabledDefaults.clear();
@@ -403,22 +411,6 @@ public class HighlightManager {
 
         if (currentFilePath != null) {
             Map<String, Boolean> states = PreferencesManager.loadHighlightStates(currentFilePath);
-
-            if (states.isEmpty()) {
-                List<HighlightPattern> legacy = PreferencesManager.loadHighlightPatterns(currentFilePath);
-                if (!legacy.isEmpty()) {
-                    for (HighlightPattern legacyPattern : legacy) {
-                        boolean exists = patterns.stream().anyMatch(p -> p.getId().equals(legacyPattern.getId()));
-                        if (!exists) {
-                            patterns.add(legacyPattern);
-                            projectEnabledDefaults.put(legacyPattern.getId(), legacyPattern.isEnabled());
-                        }
-                        states.put(legacyPattern.getId(), legacyPattern.isEnabled());
-                    }
-                    saveProjectPatterns();
-                    PreferencesManager.saveHighlightStates(currentFilePath, states);
-                }
-            }
 
             for (HighlightPattern pattern : patterns) {
                 if (states.containsKey(pattern.getId())) {
@@ -476,6 +468,42 @@ public class HighlightManager {
     }
 
     public void reloadForCurrentFile() {
+        loadPatterns();
+    }
+
+    public String getCurrentFilePath() {
+        return currentFilePath;
+    }
+
+    public void applyPatternsToCurrentFile(List<HighlightPattern> newPatterns) {
+        if (currentFilePath == null) {
+            return;
+        }
+
+        List<HighlightPattern> normalized = new ArrayList<>();
+        if (newPatterns != null) {
+            for (HighlightPattern src : newPatterns) {
+                if (src == null) {
+                    continue;
+                }
+                HighlightPattern copy = new HighlightPattern();
+                copy.setId(src.getId() != null ? src.getId() : java.util.UUID.randomUUID().toString());
+                copy.setPattern(src.getPattern());
+                copy.setColor(src.getColor());
+                copy.setRegex(src.isRegex());
+                copy.setEnabled(src.isEnabled());
+                normalized.add(copy);
+            }
+        }
+
+        PreferencesManager.saveHighlightPatterns(currentFilePath, normalized);
+
+        Map<String, Boolean> states = new HashMap<>();
+        for (HighlightPattern pattern : normalized) {
+            states.put(pattern.getId(), pattern.isEnabled());
+        }
+        PreferencesManager.saveHighlightStates(currentFilePath, states);
+
         loadPatterns();
     }
 

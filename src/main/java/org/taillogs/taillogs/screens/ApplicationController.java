@@ -633,15 +633,12 @@ public class ApplicationController {
             try {
                 Thread.sleep(3000);
                 Platform.runLater(() -> {
-                    if (wasAutoTailingBeforeSearch && currentFilePath != null && !pauseMode) {
-                        // Only resume if user hasn't manually changed state
-                        if (fileThreadRefs.containsKey(currentFilePath)) {
-                            fileThreadRefs.get(currentFilePath).setActive(true);
-                            FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
-                            pauseMode = false;
-                            updateButtonStyles();
-                            statusLabel.setText("Tailing...");
-                        }
+                    if (wasAutoTailingBeforeSearch && currentFilePath != null && pauseMode
+                            && fileThreadRefs.containsKey(currentFilePath)) {
+                        FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
+                        pauseMode = false;
+                        updateButtonStyles();
+                        statusLabel.setText("Tailing...");
                     }
                 });
             } catch (InterruptedException e) {
@@ -710,15 +707,12 @@ public class ApplicationController {
                 try {
                     Thread.sleep(3000);
                     Platform.runLater(() -> {
-                        if (wasAutoTailingBeforeSearch && currentFilePath != null && !pauseMode) {
-                            // Only resume if user hasn't manually changed state
-                            if (fileThreadRefs.containsKey(currentFilePath)) {
-                                fileThreadRefs.get(currentFilePath).setActive(true);
-                                FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
-                                pauseMode = false;
-                                updateButtonStyles();
-                                statusLabel.setText("Tailing...");
-                            }
+                        if (wasAutoTailingBeforeSearch && currentFilePath != null && pauseMode
+                                && fileThreadRefs.containsKey(currentFilePath)) {
+                            FileOperations.startTailing(currentFilePath, logArea, fileThreadRefs.get(currentFilePath), createHighlightingCallback());
+                            pauseMode = false;
+                            updateButtonStyles();
+                            statusLabel.setText("Tailing...");
                         }
                     });
                 } catch (InterruptedException e) {

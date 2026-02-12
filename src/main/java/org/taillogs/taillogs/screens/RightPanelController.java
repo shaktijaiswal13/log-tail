@@ -15,10 +15,14 @@ import javafx.util.Callback;
 import org.taillogs.taillogs.managers.BookmarkManager;
 import org.taillogs.taillogs.managers.FilterManager;
 import org.taillogs.taillogs.managers.HighlightManager;
+import org.taillogs.taillogs.config.PreferencesManager;
 import org.taillogs.taillogs.models.Bookmark;
 import org.taillogs.taillogs.models.FilterRule;
 import org.taillogs.taillogs.models.HighlightPattern;
+import org.taillogs.taillogs.models.SavedSettingsProfile;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class RightPanelController {
@@ -74,10 +78,10 @@ public class RightPanelController {
     private void setupHighlightsTab() {
         addHighlightBtn.setOnAction(e -> showAddHighlightDialog());
         if (loadHighlightsBtn != null) {
-            loadHighlightsBtn.setOnAction(e -> reloadHighlights());
+            loadHighlightsBtn.setOnAction(e -> showLoadSettingsDialog());
         }
         if (saveHighlightsBtn != null) {
-            saveHighlightsBtn.setOnAction(e -> highlightManager.saveProjectPatterns());
+            saveHighlightsBtn.setOnAction(e -> showSaveSettingsDialog());
         }
         highlightsListView.setCellFactory(this::createHighlightCell);
         setupSaveHighlightsVisibility();
@@ -218,10 +222,10 @@ public class RightPanelController {
             if (onFiltersChanged != null) onFiltersChanged.run();
         });
         if (loadFiltersBtn != null) {
-            loadFiltersBtn.setOnAction(e -> reloadFilters());
+            loadFiltersBtn.setOnAction(e -> showLoadSettingsDialog());
         }
         if (saveFiltersBtn != null) {
-            saveFiltersBtn.setOnAction(e -> filterManager.saveProjectRules());
+            saveFiltersBtn.setOnAction(e -> showSaveSettingsDialog());
         }
         filtersListView.setCellFactory(this::createFilterCell);
         setupSaveFiltersVisibility();
@@ -287,6 +291,156 @@ public class RightPanelController {
         if (onFiltersChanged != null) {
             onFiltersChanged.run();
         }
+    }
+
+    private void showSaveSettingsDialog() {
+        if (highlightManager == null || filterManager == null) {
+            return;
+        }
+        if (highlightManager.getCurrentFilePath() == null) {
+            showInfo("No open file", "Open a file before saving settings.");
+            return;
+        }
+
+        TextInputDialog nameDialog = new TextInputDialog();
+        nameDialog.setTitle("Save Settings");
+        nameDialog.setHeaderText("Save highlight/filter settings");
+        nameDialog.setContentText("Settings name:");
+
+        Optional<String> result = nameDialog.showAndWait();
+        if (result.isEmpty()) {
+            return;
+        }
+
+        String name = result.get().trim();
+        if (name.isEmpty()) {
+            showInfo("Invalid name", "Settings name cannot be empty.");
+            return;
+        }
+
+        List<HighlightPattern> highlightsCopy = copyHighlights(highlightManager.getPatterns());
+        List<FilterRule> filtersCopy = copyFilters(filterManager.getRules());
+        PreferencesManager.saveNamedSettings(name, highlightsCopy, filtersCopy);
+        showInfo("Saved", "Settings saved as \"" + name + "\".");
+    }
+
+    private void showLoadSettingsDialog() {
+        if (highlightManager == null || filterManager == null) {
+            return;
+        }
+        if (highlightManager.getCurrentFilePath() == null || filterManager.getCurrentFilePath() == null) {
+            showInfo("No open file", "Open a file before loading settings.");
+            return;
+        }
+
+        List<String> savedNames = PreferencesManager.listNamedSettings();
+        if (savedNames.isEmpty()) {
+            showInfo("No saved settings", "No settings found in ~/.tail_logs/settings.");
+            return;
+        }
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Load Settings");
+        dialog.setHeaderText("Select a saved settings profile");
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        ListView<String> listView = new ListView<>();
+        listView.getItems().addAll(savedNames);
+        listView.setPrefHeight(320);
+        listView.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                } else {
+                    HBox row = new HBox(8);
+                    row.setAlignment(Pos.CENTER_LEFT);
+
+                    Label nameLabel = new Label(item);
+                    HBox.setHgrow(nameLabel, Priority.ALWAYS);
+
+                    Button applyBtn = new Button("Apply");
+                    applyBtn.setCursor(Cursor.HAND);
+                    applyBtn.setOnAction(e -> applySavedSettings(item, dialog));
+
+                    row.getChildren().addAll(nameLabel, applyBtn);
+                    setGraphic(row);
+                }
+            }
+        });
+
+        dialog.getDialogPane().setContent(listView);
+        dialog.showAndWait();
+    }
+
+    private void applySavedSettings(String settingsName, Dialog<Void> parentDialog) {
+        SavedSettingsProfile profile = PreferencesManager.loadNamedSettings(settingsName);
+        if (profile == null) {
+            showInfo("Load failed", "Unable to load settings: " + settingsName);
+            return;
+        }
+
+        highlightManager.applyPatternsToCurrentFile(profile.getHighlights());
+        filterManager.applyRulesToCurrentFile(profile.getFilters());
+
+        updateHighlightsList();
+        highlightsListView.refresh();
+        updateFiltersList();
+        filtersListView.refresh();
+
+        if (onHighlightsChanged != null) {
+            onHighlightsChanged.run();
+        }
+        if (onFiltersChanged != null) {
+            onFiltersChanged.run();
+        }
+
+        if (parentDialog != null) {
+            parentDialog.close();
+        }
+        showInfo("Applied", "Applied \"" + settingsName + "\" to current file.");
+    }
+
+    private List<HighlightPattern> copyHighlights(List<HighlightPattern> source) {
+        List<HighlightPattern> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (HighlightPattern pattern : source) {
+            HighlightPattern copy = new HighlightPattern();
+            copy.setId(pattern.getId());
+            copy.setPattern(pattern.getPattern());
+            copy.setColor(pattern.getColor());
+            copy.setRegex(pattern.isRegex());
+            copy.setEnabled(pattern.isEnabled());
+            result.add(copy);
+        }
+        return result;
+    }
+
+    private List<FilterRule> copyFilters(List<FilterRule> source) {
+        List<FilterRule> result = new ArrayList<>();
+        if (source == null) {
+            return result;
+        }
+        for (FilterRule rule : source) {
+            FilterRule copy = new FilterRule();
+            copy.setId(rule.getId());
+            copy.setPattern(rule.getPattern());
+            copy.setRegex(rule.isRegex());
+            copy.setEnabled(rule.isEnabled());
+            result.add(copy);
+        }
+        return result;
+    }
+
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(title);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private ListCell<FilterRule> createFilterCell(ListView<FilterRule> list) {

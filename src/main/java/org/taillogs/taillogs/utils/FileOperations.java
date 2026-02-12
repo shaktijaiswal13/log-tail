@@ -7,6 +7,8 @@ import org.fxmisc.richtext.CodeArea;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.io.ByteArrayOutputStream;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,10 +69,16 @@ public class FileOperations {
     }
 
     public static void startTailing(String filePath, CodeArea textArea, TailThreadRef threadRef, Runnable highlightCallback) {
-        if (!threadRef.isActive()) {
+        synchronized (threadRef) {
             threadRef.setActive(true);
+            Thread existing = threadRef.getTailThread();
+            if (existing != null && existing.isAlive()) {
+                return;
+            }
+
             Thread tailThread = new Thread(() -> tailFile(filePath, textArea, threadRef, highlightCallback), "TailThread");
             tailThread.setDaemon(true);
+            threadRef.setTailThread(tailThread);
             tailThread.start();
         }
     }
@@ -82,20 +90,34 @@ public class FileOperations {
             if (threadRef.getFilePosition() == 0) {
                 threadRef.setFilePosition(file.length());
             }
+            long lastKnownModified = file.lastModified();
 
             while (threadRef.isActive()) {
                 try {
                     long currentSize = file.length();
                     long filePosition = threadRef.getFilePosition();
+                    long currentModified = file.lastModified();
+
+                    // Handle truncate/replace cases where the file shrinks or is rewritten in-place.
+                    if (currentSize < filePosition || (currentModified > lastKnownModified && currentSize == filePosition)) {
+                        filePosition = 0;
+                        threadRef.setFilePosition(0);
+                    }
+
                     if (currentSize > filePosition) {
-                        try (InputStreamReader reader = new InputStreamReader(
-                                new FileInputStream(file), StandardCharsets.UTF_8)) {
-                            reader.skip(filePosition);
+                        try (RandomAccessFile reader = new RandomAccessFile(file, "r");
+                             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                            reader.seek(filePosition);
+                            byte[] buffer = new byte[8192];
+                            int bytesRead;
+                            while ((bytesRead = reader.read(buffer)) != -1) {
+                                out.write(buffer, 0, bytesRead);
+                            }
+
                             StringBuilder newContent = new StringBuilder();
-                            char[] buffer = new char[8192];
-                            int charsRead;
-                            while ((charsRead = reader.read(buffer)) != -1) {
-                                newContent.append(buffer, 0, charsRead);
+                            String decoded = out.toString(StandardCharsets.UTF_8);
+                            if (!decoded.isEmpty()) {
+                                newContent.append(decoded);
                             }
 
                             if (newContent.length() > 0) {
@@ -116,6 +138,7 @@ public class FileOperations {
                             }
                         }
                     }
+                    lastKnownModified = currentModified;
                 } catch (Exception e) {
                     // Ignore temporary read errors
                 }
@@ -124,6 +147,8 @@ public class FileOperations {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            threadRef.setTailThread(null);
         }
     }
 
@@ -223,6 +248,7 @@ public class FileOperations {
     public static class TailThreadRef {
         private boolean active = false;
         private long filePosition = 0;
+        private Thread tailThread;
 
         public synchronized boolean isActive() {
             return active;
@@ -230,6 +256,9 @@ public class FileOperations {
 
         public synchronized void setActive(boolean active) {
             this.active = active;
+            if (!active && tailThread != null) {
+                tailThread.interrupt();
+            }
         }
 
         public synchronized long getFilePosition() {
@@ -238,6 +267,14 @@ public class FileOperations {
 
         public synchronized void setFilePosition(long position) {
             this.filePosition = position;
+        }
+
+        public synchronized Thread getTailThread() {
+            return tailThread;
+        }
+
+        public synchronized void setTailThread(Thread tailThread) {
+            this.tailThread = tailThread;
         }
     }
 }
