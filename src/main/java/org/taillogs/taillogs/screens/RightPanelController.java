@@ -22,8 +22,10 @@ import org.taillogs.taillogs.models.HighlightPattern;
 import org.taillogs.taillogs.models.SavedSettingsProfile;
 
 import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class RightPanelController {
     public TabPane tabPane;
@@ -44,6 +46,7 @@ public class RightPanelController {
     private BookmarkManager bookmarkManager;
     private Runnable onHighlightsChanged;
     private Runnable onFiltersChanged;
+    private Supplier<String> currentVisibleFileSupplier;
 
     public void initialize() {
         System.out.println("[RightPanelController] initialize() called");
@@ -71,6 +74,10 @@ public class RightPanelController {
 
     public void setOnFiltersChanged(Runnable callback) {
         this.onFiltersChanged = callback;
+    }
+
+    public void setCurrentVisibleFileSupplier(Supplier<String> currentVisibleFileSupplier) {
+        this.currentVisibleFileSupplier = currentVisibleFileSupplier;
     }
 
     // ========== HIGHLIGHTS TAB ==========
@@ -297,6 +304,7 @@ public class RightPanelController {
         if (highlightManager == null || filterManager == null) {
             return;
         }
+        synchronizeManagersToVisibleFile();
         if (highlightManager.getCurrentFilePath() == null) {
             showInfo("No open file", "Open a file before saving settings.");
             return;
@@ -328,6 +336,7 @@ public class RightPanelController {
         if (highlightManager == null || filterManager == null) {
             return;
         }
+        synchronizeManagersToVisibleFile();
         if (highlightManager.getCurrentFilePath() == null || filterManager.getCurrentFilePath() == null) {
             showInfo("No open file", "Open a file before loading settings.");
             return;
@@ -341,7 +350,11 @@ public class RightPanelController {
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Load Settings");
-        dialog.setHeaderText("Select a saved settings profile");
+        String visibleFilePath = currentVisibleFileSupplier != null ? currentVisibleFileSupplier.get() : null;
+        String visibleFileName = (visibleFilePath != null && !visibleFilePath.isBlank())
+                ? new File(visibleFilePath).getName()
+                : "Unknown file";
+        dialog.setHeaderText("Select a saved settings profile\nApplying to: " + visibleFileName);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
         ListView<String> listView = new ListView<>();
@@ -375,6 +388,13 @@ public class RightPanelController {
     }
 
     private void applySavedSettings(String settingsName, Dialog<Void> parentDialog) {
+        synchronizeManagersToVisibleFile();
+
+        if (highlightManager.getCurrentFilePath() == null || filterManager.getCurrentFilePath() == null) {
+            showInfo("No open file", "Open a file before loading settings.");
+            return;
+        }
+
         SavedSettingsProfile profile = PreferencesManager.loadNamedSettings(settingsName);
         if (profile == null) {
             showInfo("Load failed", "Unable to load settings: " + settingsName);
@@ -399,7 +419,24 @@ public class RightPanelController {
         if (parentDialog != null) {
             parentDialog.close();
         }
-        showInfo("Applied", "Applied \"" + settingsName + "\" to current file.");
+    }
+
+    private void synchronizeManagersToVisibleFile() {
+        if (currentVisibleFileSupplier == null || highlightManager == null || filterManager == null) {
+            return;
+        }
+
+        String visibleFilePath = currentVisibleFileSupplier.get();
+        if (visibleFilePath == null || visibleFilePath.isBlank()) {
+            return;
+        }
+
+        if (!visibleFilePath.equals(highlightManager.getCurrentFilePath())) {
+            highlightManager.setCurrentFile(visibleFilePath);
+        }
+        if (!visibleFilePath.equals(filterManager.getCurrentFilePath())) {
+            filterManager.setCurrentFile(visibleFilePath);
+        }
     }
 
     private List<HighlightPattern> copyHighlights(List<HighlightPattern> source) {

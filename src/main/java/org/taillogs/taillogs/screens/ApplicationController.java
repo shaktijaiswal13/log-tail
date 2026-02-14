@@ -405,6 +405,7 @@ public class ApplicationController {
             // Set callbacks for when highlights/filters change
             rightPanelController.setOnHighlightsChanged(this::reapplyHighlighting);
             rightPanelController.setOnFiltersChanged(this::applyFilteringToContent);
+            rightPanelController.setCurrentVisibleFileSupplier(() -> currentFilePath);
 
             // Add TabPane to the container
             System.out.println("Adding TabPane to rightPanelContainer...");
