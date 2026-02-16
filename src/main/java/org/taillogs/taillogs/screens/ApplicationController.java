@@ -3,6 +3,7 @@ package org.taillogs.taillogs.screens;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -430,6 +431,20 @@ public class ApplicationController {
     }
 
     public void setCurrentFile(String filePath) {
+        if (filePath == null) {
+            return;
+        }
+
+        if (!FileOperations.isLikelyTextFile(filePath)) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Unsupported File Type");
+            alert.setHeaderText("Cannot open this file");
+            alert.setContentText("Selected file is not a text/log file: " + new File(filePath).getName());
+            alert.showAndWait();
+            statusLabel.setText("Unsupported file type");
+            return;
+        }
+
         this.currentFilePath = filePath;
         this.currentFolderPath = new File(filePath).getParent();
         populateFiles();

@@ -105,15 +105,13 @@ public class MainApplication extends Application {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setTitle("Select a file");
 
-                // Add all files first (so it's the default)
+                FileChooser.ExtensionFilter textFilter = new FileChooser.ExtensionFilter(
+                        "Text and log files",
+                        "*.log", "*.txt", "*.out", "*.json", "*.yaml", "*.yml", "*.xml", "*.csv", "*.conf");
                 FileChooser.ExtensionFilter allFilesFilter = new FileChooser.ExtensionFilter("All files (*.*)", "*.*");
-                FileChooser.ExtensionFilter logFilter = new FileChooser.ExtensionFilter("Log files (*.log)", "*.log");
-                FileChooser.ExtensionFilter txtFilter = new FileChooser.ExtensionFilter("Text files (*.txt)", "*.txt");
 
-                fileChooser.getExtensionFilters().addAll(allFilesFilter, logFilter, txtFilter);
-
-                // Set All files as the default filter
-                fileChooser.setSelectedExtensionFilter(allFilesFilter);
+                fileChooser.getExtensionFilters().addAll(textFilter, allFilesFilter);
+                fileChooser.setSelectedExtensionFilter(textFilter);
 
                 File selectedFile = fileChooser.showOpenDialog(primaryStage);
                 if (selectedFile != null) {

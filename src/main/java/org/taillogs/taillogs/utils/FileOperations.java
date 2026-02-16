@@ -13,13 +13,63 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FileOperations {
+    private static final int TEXT_SNIFF_BYTES = 8192;
+
+    public static boolean isLikelyTextFile(String filePath) {
+        try {
+            Path path = Paths.get(filePath);
+            if (!Files.exists(path) || !Files.isRegularFile(path)) {
+                return false;
+            }
+
+            String contentType = Files.probeContentType(path);
+            if (contentType != null) {
+                String normalized = contentType.toLowerCase();
+                if (normalized.startsWith("text/")) {
+                    return true;
+                }
+                if (normalized.contains("json") || normalized.contains("xml")
+                        || normalized.contains("yaml") || normalized.contains("x-sh")) {
+                    return true;
+                }
+                if (normalized.startsWith("image/") || normalized.startsWith("video/")
+                        || normalized.startsWith("audio/") || normalized.equals("application/octet-stream")) {
+                    return false;
+                }
+            }
+
+            byte[] sample = new byte[TEXT_SNIFF_BYTES];
+            int sampleSize;
+            try (FileInputStream in = new FileInputStream(path.toFile())) {
+                sampleSize = in.read(sample);
+            }
+
+            if (sampleSize <= 0) {
+                return true;
+            }
+
+            int suspicious = 0;
+            for (int i = 0; i < sampleSize; i++) {
+                int value = sample[i] & 0xFF;
+                if (value == 0) {
+                    return false;
+                }
+                boolean isAllowedControl = value == '\n' || value == '\r' || value == '\t' || value == '\f';
+                if (value < 0x20 && !isAllowedControl) {
+                    suspicious++;
+                }
+            }
+
+            return (suspicious * 100) / sampleSize < 2;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     public static long loadFileContent(CodeArea textArea, String filePath) {
         return loadFileContent(textArea, filePath, null);
