@@ -217,11 +217,11 @@ public class MainApplication extends Application {
         alert.setHeaderText("Available Shortcuts");
         alert.setContentText(
             "Common Shortcuts:\n\n" +
-            "Ctrl+O - Open file\n" +
-            "Ctrl+F - Open folder\n" +
-            "Ctrl+Q - Quit application\n" +
-            "Ctrl+L - Clear display\n" +
-            "Ctrl+R - Refresh file\n\n" +
+            "Ctrl/Cmd+O - Open file\n" +
+            "Ctrl/Cmd+F - Open folder\n" +
+            "Ctrl/Cmd+Q - Quit application\n" +
+            "Ctrl/Cmd+L - Clear display\n" +
+            "Ctrl/Cmd+R - Refresh file\n\n" +
             "Note: These shortcuts can be customized in Settings."
         );
         alert.showAndWait();

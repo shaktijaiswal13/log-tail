@@ -4,6 +4,9 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Alert;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.application.Platform;
 import org.taillogs.taillogs.config.AppearanceSettings;
 import org.taillogs.taillogs.config.PreferencesManager;
@@ -47,15 +50,18 @@ public class MenuBarCreator {
 
         MenuItem openFileItem = new MenuItem("📁 Open File");
         openFileItem.setOnAction(e -> callbacks.onOpenFile());
+        openFileItem.setAccelerator(new KeyCodeCombination(KeyCode.O, KeyCombination.SHORTCUT_DOWN));
 
         MenuItem openFolderItem = new MenuItem("📂 Open Folder");
         openFolderItem.setOnAction(e -> callbacks.onOpenFolder());
+        openFolderItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN));
 
         recentFilesMenu = new Menu("Recent Files");
         updateRecentFilesMenu(recentFilesMenu);
 
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(e -> callbacks.onExit());
+        exitItem.setAccelerator(new KeyCodeCombination(KeyCode.Q, KeyCombination.SHORTCUT_DOWN));
 
         fileMenu.getItems().addAll(openFileItem, openFolderItem, new javafx.scene.control.SeparatorMenuItem(),
                 recentFilesMenu, new javafx.scene.control.SeparatorMenuItem(), exitItem);
@@ -66,9 +72,11 @@ public class MenuBarCreator {
 
         MenuItem clearItem = new MenuItem("📋 Clear Display");
         clearItem.setOnAction(e -> callbacks.onClearDisplay());
+        clearItem.setAccelerator(new KeyCodeCombination(KeyCode.L, KeyCombination.SHORTCUT_DOWN));
 
         MenuItem refreshItem = new MenuItem("🔄 Refresh File");
         refreshItem.setOnAction(e -> callbacks.onRefreshFile());
+        refreshItem.setAccelerator(new KeyCodeCombination(KeyCode.R, KeyCombination.SHORTCUT_DOWN));
 
         MenuItem pauseItem = new MenuItem("⏸ Pause/Resume");
         pauseItem.setOnAction(e -> callbacks.onTogglePause());
