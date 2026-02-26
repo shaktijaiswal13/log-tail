@@ -146,3 +146,27 @@
     -fx-background-color: linear-gradient(to bottom, #E0E0E0, #D0D0D0);
     -fx-border-color: #999999;
 }
+
+/* SplitPane Divider Styling */
+.split-pane {
+    -fx-padding: 0;
+    -fx-background-color: #ffffff;
+}
+
+.split-pane:horizontal .split-pane-divider {
+    -fx-border-color: #cccccc;
+    -fx-border-width: 0 1 0 0;
+    -fx-background-color: #eeeeee;
+    -fx-padding: 0;
+    -fx-min-width: 8;
+    -fx-max-width: 8;
+    -fx-cursor: col-resize;
+}
+
+.split-pane:horizontal .split-pane-divider:hover {
+    -fx-background-color: #d0d0d0;
+}
+
+.split-pane:horizontal .split-pane-divider:pressed {
+    -fx-background-color: #b0b0b0;
+}
