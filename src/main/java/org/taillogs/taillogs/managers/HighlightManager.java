@@ -170,7 +170,16 @@ public class HighlightManager {
         for (CompiledPattern cp : compiledPatterns) {
             Matcher m = cp.pattern.matcher(text);
             while (m.find()) {
-                allMatches.add(new Match(m.start(), m.end(), cp.styleClass, cp.isCustom));
+                if (cp.isCustom) {
+                    // Custom highlight patterns color the whole containing line.
+                    int lineStart = text.lastIndexOf('\n', m.start());
+                    lineStart = (lineStart == -1) ? 0 : lineStart + 1;
+                    int lineEnd = text.indexOf('\n', m.start());
+                    lineEnd = (lineEnd == -1) ? text.length() : lineEnd;
+                    allMatches.add(new Match(lineStart, lineEnd, cp.styleClass, true));
+                } else {
+                    allMatches.add(new Match(m.start(), m.end(), cp.styleClass, false));
+                }
             }
         }
         
