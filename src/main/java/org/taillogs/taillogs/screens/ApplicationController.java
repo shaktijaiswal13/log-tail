@@ -48,11 +48,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class ApplicationController {
     @FXML
@@ -179,18 +176,34 @@ public class ApplicationController {
     
     private void updateButtonState() {
         if (!pauseMode) {
-            // Tailing is active - show darker color
+            // Tailing is active, make button classic medium grey
             pauseBtn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #A8A8A8, #909090); " +
-                "-fx-border-color: #707070; " +
-                "-fx-text-fill: #FFFFFF;"
+                "-fx-background-color: linear-gradient(to bottom, #C0C0C0, #A8A8A8); " +
+                "-fx-border-color: #909090; " +
+                "-fx-text-fill: #333333; " +
+                "-fx-padding: 8 18 8 18; " +
+                "-fx-font-size: 11px; " +
+                "-fx-font-weight: 600; " +
+                "-fx-border-width: 1px; " +
+                "-fx-background-radius: 6px; " +
+                "-fx-border-radius: 6px; " +
+                "-fx-cursor: hand; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 4, 0, 0, 2);"
             );
         } else {
-            // Tailing is paused - show light gray like other buttons
+            // Tailing is paused, show classic light grey
             pauseBtn.setStyle(
-                "-fx-background-color: linear-gradient(to bottom, #F8F8F8, #E8E8E8); " +
+                "-fx-background-color: linear-gradient(to bottom, #F5F5F5, #E8E8E8); " +
+                "-fx-text-fill: #666666; " +
                 "-fx-border-color: #CCCCCC; " +
-                "-fx-text-fill: #333333;"
+                "-fx-padding: 8 18 8 18; " +
+                "-fx-font-size: 11px; " +
+                "-fx-font-weight: 600; " +
+                "-fx-border-width: 1px; " +
+                "-fx-background-radius: 6px; " +
+                "-fx-border-radius: 6px; " +
+                "-fx-cursor: hand; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 3, 0, 0, 1);"
             );
         }
     }
@@ -473,7 +486,7 @@ public class ApplicationController {
             long fileSize = FileOperations.loadFileContent(logArea, currentFilePath, createHighlightingCallback());
             // Initialize file position to current file size so tailing starts from here
             fileThreadRef.setFilePosition(fileSize);
-            fileInfoLabel.setText("Log Tail");
+            fileInfoLabel.setText("Ready");
 
             // Start tailing with the file-specific thread ref and highlighting callback
             pauseMode = false; // Ensure tailing is active
@@ -556,8 +569,8 @@ public class ApplicationController {
         logArea.moveTo(matchPos);
         logArea.requestFollowCaret();
 
-        // Reapply highlighting to show current match (with custom highlights merged)
-        reapplyHighlighting();
+        // Reapply highlighting to show current match
+        applySearchHighlighting();
 
         statusLabel.setText("Match " + (currentMatchIndex + 1) + " of " + matchPositions.size());
 
@@ -627,8 +640,8 @@ public class ApplicationController {
                 }
             }
 
-            // Apply highlighting (search + custom highlights merged)
-            reapplyHighlighting();
+            // Apply highlighting to all matches
+            applySearchHighlighting();
 
             // Scroll to first match
             int firstMatchPos = matchPositions.get(0);
@@ -676,18 +689,6 @@ public class ApplicationController {
         }
 
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
-
-        // Collect all line ranges that contain matches
-        Set<LineRange> lineRanges = new HashSet<>();
-        for (int matchPos : matchPositions) {
-            LineRange range = getLineRange(content, matchPos);
-            lineRanges.add(range);
-        }
-
-        // Convert to sorted list for processing
-        List<LineRange> sortedRanges = new ArrayList<>(lineRanges);
-        sortedRanges.sort((a, b) -> Integer.compare(a.start, b.start));
-
         int lastEnd = 0;
 
         // Build spans in source-order: plain text gap, then matched token span.
@@ -711,195 +712,12 @@ public class ApplicationController {
         logArea.setStyleSpans(0, spans);
     }
 
-    /**
-     * Get the start and end positions of the line containing the given position
-     */
-    private LineRange getLineRange(String content, int position) {
-        int start = position;
-        int end = position;
-
-        // Find start of line (go back to previous newline)
-        while (start > 0 && content.charAt(start - 1) != '\n') {
-            start--;
-        }
-
-        // Find end of line (go forward to next newline)
-        while (end < content.length() && content.charAt(end) != '\n') {
-            end++;
-        }
-
-        // Include the newline character in the range if it exists
-        if (end < content.length() && content.charAt(end) == '\n') {
-            end++;
-        }
-
-        return new LineRange(start, end);
-    }
-
-    /**
-     * Helper class to represent a line range
-     */
-    private static class LineRange {
-        int start;
-        int end;
-
-        LineRange(int start, int end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            LineRange lineRange = (LineRange) o;
-            return start == lineRange.start && end == lineRange.end;
-        }
-
-        @Override
-        public int hashCode() {
-            return java.util.Objects.hash(start, end);
-        }
-    }
-
     private void clearSearchHighlights() {
         if (logArea.getText().isEmpty()) {
             return;
         }
         // Reapply combined highlighting (log levels + custom patterns) when search is cleared
         highlightManager.applyCombinedHighlighting(logArea);
-    }
-
-    /**
-     * Apply both search highlighting and custom highlights together
-     * Applies combined highlights first, then overlays search results
-     */
-    private void applySearchAndHighlightsCombined() {
-        if (currentSearchTerm.isEmpty() || matchPositions.isEmpty()) {
-            return;
-        }
-
-        String content = logArea.getText();
-
-        // Build search spans for the entire document
-        StyleSpansBuilder<Collection<String>> searchBuilder = new StyleSpansBuilder<>();
-        Set<LineRange> lineRanges = new HashSet<>();
-        for (int matchPos : matchPositions) {
-            LineRange range = getLineRange(content, matchPos);
-            lineRanges.add(range);
-        }
-
-        List<LineRange> sortedRanges = new ArrayList<>(lineRanges);
-        sortedRanges.sort((a, b) -> Integer.compare(a.start, b.start));
-
-        int lastEnd = 0;
-        for (LineRange lineRange : sortedRanges) {
-            if (lineRange.start > lastEnd) {
-                searchBuilder.add(Collections.emptyList(), lineRange.start - lastEnd);
-            }
-
-            boolean isCurrentLine = false;
-            for (int matchPos : matchPositions) {
-                if (matchPos >= lineRange.start && matchPos < lineRange.end
-                    && matchPositions.indexOf(matchPos) == currentMatchIndex) {
-                    isCurrentLine = true;
-                    break;
-                }
-            }
-
-            String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
-            searchBuilder.add(Collections.singleton(styleClass), lineRange.end - lineRange.start);
-            lastEnd = lineRange.end;
-        }
-
-        if (lastEnd < content.length()) {
-            searchBuilder.add(Collections.emptyList(), content.length() - lastEnd);
-        }
-
-        StyleSpans<Collection<String>> searchSpans = searchBuilder.create();
-
-        // Get custom highlight spans
-        StyleSpans<Collection<String>> customSpans = highlightManager.getCustomHighlightSpans(logArea);
-
-        // Merge search and custom spans
-        StyleSpans<Collection<String>> mergedSpans = mergeStyleSpans(searchSpans, customSpans, content.length());
-
-        logArea.setStyleSpans(0, mergedSpans);
-    }
-
-    /**
-     * Merge two StyleSpans objects. Search spans take precedence where both exist.
-     */
-    private StyleSpans<Collection<String>> mergeStyleSpans(StyleSpans<Collection<String>> searchSpans,
-                                                             StyleSpans<Collection<String>> customSpans,
-                                                             int length) {
-        StyleSpansBuilder<Collection<String>> mergedBuilder = new StyleSpansBuilder<>();
-
-        // Build maps of position to style for easier lookup
-        Map<Integer, Collection<String>> searchStyleMap = new HashMap<>();
-        Map<Integer, Collection<String>> customStyleMap = new HashMap<>();
-
-        int pos = 0;
-        for (var span : searchSpans) {
-            searchStyleMap.put(pos, span.getStyle());
-            pos += span.getLength();
-        }
-
-        if (customSpans != null) {
-            pos = 0;
-            for (var span : customSpans) {
-                customStyleMap.put(pos, span.getStyle());
-                pos += span.getLength();
-            }
-        }
-
-        // Now merge by iterating through all positions
-        Collection<Integer> allChangePoints = new TreeSet<>();
-        allChangePoints.addAll(searchStyleMap.keySet());
-        allChangePoints.addAll(customStyleMap.keySet());
-        allChangePoints.add(length); // Add end position
-
-        List<Integer> sortedPoints = new ArrayList<>(allChangePoints);
-        Collections.sort(sortedPoints);
-
-        for (int i = 0; i < sortedPoints.size() - 1; i++) {
-            int rangeStart = sortedPoints.get(i);
-            int rangeEnd = sortedPoints.get(i + 1);
-
-            // Get the style for this range
-            Collection<String> style = new HashSet<>();
-
-            // Get custom style for this range
-            Collection<String> customStyle = getStyleForPosition(customStyleMap, rangeStart);
-            if (customStyle != null && !customStyle.isEmpty()) {
-                style.addAll(customStyle);
-            }
-
-            // Get search style for this range (takes precedence)
-            Collection<String> searchStyle = getStyleForPosition(searchStyleMap, rangeStart);
-            if (searchStyle != null && !searchStyle.isEmpty()) {
-                style.clear();
-                style.addAll(searchStyle);
-            }
-
-            mergedBuilder.add(style, rangeEnd - rangeStart);
-        }
-
-        return mergedBuilder.create();
-    }
-
-    private Collection<String> getStyleForPosition(Map<Integer, Collection<String>> styleMap, int position) {
-        int maxPos = -1;
-        Collection<String> result = null;
-
-        for (int pos : styleMap.keySet()) {
-            if (pos <= position && pos > maxPos) {
-                maxPos = pos;
-                result = styleMap.get(pos);
-            }
-        }
-
-        return result;
     }
 
     // Setter for onBack callback
@@ -975,7 +793,7 @@ public class ApplicationController {
             } else {
                 currentFilePath = null;
                 logArea.clear();
-                fileInfoLabel.setText("Log Tail");
+                fileInfoLabel.setText("Ready");
                 statusLabel.setText("No files open");
             }
         }
@@ -1003,9 +821,9 @@ public class ApplicationController {
             System.out.println("[ApplicationController] No active search, applying combined highlighting");
             highlightManager.applyCombinedHighlighting(logArea);
         } else {
-            // Search is active, apply both combined highlighting AND search highlighting
-            System.out.println("[ApplicationController] Search is active, applying search + combined highlighting");
-            applySearchAndHighlightsCombined();
+            // Search is active, keep search highlighting but apply combined as base
+            System.out.println("[ApplicationController] Search is active, applying search highlighting");
+            applySearchHighlighting();
         }
 
         if (rightPanelController != null) {
@@ -1090,21 +908,21 @@ public class ApplicationController {
 
         // File name label
         Label fileName = new Label(new File(filePath).getName());
-        int tabFontSize = Math.max(11, appearanceSettings.getFontSize() - 2);
+        int tabFontSize = Math.max(8, appearanceSettings.getFontSize() - 4);
         String tabFontWeightStyle = appearanceSettings.getFontWeight().equals("Bold") ? "-fx-font-weight: bold; " : "";
         fileName.setStyle("-fx-font-size: " + tabFontSize + "; -fx-text-fill: #333333; " + tabFontWeightStyle);
 
         // Close button
         Button closeTab = new Button("\u2715");
         closeTab.setStyle(
-            "-fx-padding: 3 5 3 5; " +
-            "-fx-font-size: 12; " +
+            "-fx-padding: 2 4 2 4; " +
+            "-fx-font-size: 8; " +
             "-fx-background-color: white; " +
             "-fx-text-fill: black; " +
             "-fx-border-width: 0; " +
             "-fx-border-radius: 0; " +
-            "-fx-min-width: 26; " +
-            "-fx-min-height: 24; " +
+            "-fx-min-width: 20; " +
+            "-fx-min-height: 18; " +
             "-fx-cursor: hand;"
         );
         closeTab.setCursor(Cursor.HAND);
@@ -1140,7 +958,7 @@ public class ApplicationController {
                 "-fx-border-width: 2 1 0 1; " +
                 "-fx-alignment: CENTER_LEFT;"
             );
-            fileName.setStyle("-fx-font-size: " + (tabFontSize + 1) + "; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+            fileName.setStyle("-fx-font-size: 9; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
         }
 
         return tab;
