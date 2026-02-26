@@ -1,8 +1,15 @@
 package org.taillogs.taillogs.screens;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -11,6 +18,7 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import org.fxmisc.richtext.CodeArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -50,8 +58,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.lang.reflect.Type;
+import java.util.stream.Stream;
 
 public class ApplicationController {
+    private static final Path SAVED_SETTINGS_DIR = Paths.get(System.getProperty("user.home"), ".tail_logs", "settings");
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     @FXML
     private Label fileInfoLabel;
     @FXML
@@ -354,7 +367,25 @@ public class ApplicationController {
 
             // Add TabPane to the container
             System.out.println("Adding TabPane to rightPanelContainer...");
-            rightPanelContainer.getChildren().add(tabPane);
+            HBox settingsButtonsBox = new HBox(8);
+            settingsButtonsBox.setStyle("-fx-padding: 8; -fx-border-color: #dddddd; -fx-border-width: 1 0 0 0; -fx-background-color: #f5f5f5;");
+
+            Button loadSettingsBtn = new Button("Load Settings");
+            loadSettingsBtn.setMaxWidth(Double.MAX_VALUE);
+            loadSettingsBtn.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-text-fill: #333333; -fx-padding: 6 10; -fx-cursor: hand;");
+            loadSettingsBtn.setCursor(Cursor.HAND);
+            loadSettingsBtn.setOnAction(e -> loadRightPanelSettings());
+            HBox.setHgrow(loadSettingsBtn, Priority.ALWAYS);
+
+            Button saveSettingsBtn = new Button("Save Settings");
+            saveSettingsBtn.setMaxWidth(Double.MAX_VALUE);
+            saveSettingsBtn.setStyle("-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-text-fill: #333333; -fx-padding: 6 10; -fx-cursor: hand;");
+            saveSettingsBtn.setCursor(Cursor.HAND);
+            saveSettingsBtn.setOnAction(e -> saveRightPanelSettings());
+            HBox.setHgrow(saveSettingsBtn, Priority.ALWAYS);
+
+            settingsButtonsBox.getChildren().addAll(loadSettingsBtn, saveSettingsBtn);
+            rightPanelContainer.getChildren().addAll(tabPane, settingsButtonsBox);
             System.out.println("Container children count: " + rightPanelContainer.getChildren().size());
 
             // Force layout update
@@ -371,6 +402,131 @@ public class ApplicationController {
             errorLabel.setStyle("-fx-text-fill: red; -fx-padding: 10;");
             errorLabel.setWrapText(true);
             rightPanelContainer.getChildren().add(errorLabel);
+        }
+    }
+
+    private void saveRightPanelSettings() {
+        try {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Save Settings");
+            dialog.setHeaderText("Save current right panel settings");
+            dialog.setContentText("Settings name:");
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isEmpty()) {
+                return;
+            }
+
+            String name = result.get().trim();
+            if (name.isEmpty()) {
+                statusLabel.setText("Save canceled: empty name");
+                return;
+            }
+
+            String safeName = name.replaceAll("[^a-zA-Z0-9._-]", "_");
+            Files.createDirectories(SAVED_SETTINGS_DIR);
+
+            JsonObject settings = new JsonObject();
+            settings.addProperty("name", safeName);
+            settings.addProperty("createdAt", System.currentTimeMillis());
+            settings.add("highlights", gson.toJsonTree(new ArrayList<>(highlightManager.getPatterns())));
+            settings.add("filters", gson.toJsonTree(new ArrayList<>(filterManager.getRules())));
+
+            Path settingsFile = SAVED_SETTINGS_DIR.resolve(safeName + ".json");
+            Files.writeString(settingsFile, gson.toJson(settings));
+            statusLabel.setText("Settings saved: " + safeName);
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Save Settings Error");
+            alert.setHeaderText("Failed to save settings");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    private void loadRightPanelSettings() {
+        try {
+            Files.createDirectories(SAVED_SETTINGS_DIR);
+
+            List<String> settingNames;
+            try (Stream<Path> files = Files.list(SAVED_SETTINGS_DIR)) {
+                settingNames = files
+                        .filter(path -> Files.isRegularFile(path) && path.getFileName().toString().toLowerCase().endsWith(".json"))
+                        .map(path -> path.getFileName().toString().replaceFirst("\\.json$", ""))
+                        .sorted(String::compareToIgnoreCase)
+                        .toList();
+            }
+
+            if (settingNames.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Load Settings");
+                alert.setHeaderText("No saved settings found");
+                alert.setContentText("No files were found in: " + SAVED_SETTINGS_DIR);
+                alert.showAndWait();
+                return;
+            }
+
+            ChoiceDialog<String> dialog = new ChoiceDialog<>(settingNames.get(0), settingNames);
+            dialog.setTitle("Load Settings");
+            dialog.setHeaderText("Select saved settings");
+            dialog.setContentText("Settings:");
+
+            Optional<String> selected = dialog.showAndWait();
+            if (selected.isEmpty()) {
+                return;
+            }
+
+            Path settingsFile = SAVED_SETTINGS_DIR.resolve(selected.get() + ".json");
+            if (!Files.exists(settingsFile)) {
+                statusLabel.setText("Settings file not found: " + selected.get());
+                return;
+            }
+
+            JsonObject settings = gson.fromJson(Files.readString(settingsFile), JsonObject.class);
+            if (settings == null) {
+                statusLabel.setText("Invalid settings file: " + selected.get());
+                return;
+            }
+
+            Type highlightListType = new TypeToken<List<HighlightPattern>>() {}.getType();
+            Type filterListType = new TypeToken<List<FilterRule>>() {}.getType();
+
+            JsonElement highlightsElement = settings.get("highlights");
+            JsonElement filtersElement = settings.get("filters");
+
+            List<HighlightPattern> loadedHighlights = highlightsElement != null && !highlightsElement.isJsonNull()
+                    ? gson.fromJson(highlightsElement, highlightListType)
+                    : new ArrayList<>();
+            List<FilterRule> loadedFilters = filtersElement != null && !filtersElement.isJsonNull()
+                    ? gson.fromJson(filtersElement, filterListType)
+                    : new ArrayList<>();
+
+            if (loadedHighlights == null) {
+                loadedHighlights = new ArrayList<>();
+            }
+            if (loadedFilters == null) {
+                loadedFilters = new ArrayList<>();
+            }
+
+            highlightManager.getPatterns().setAll(loadedHighlights);
+            filterManager.getRules().setAll(loadedFilters);
+
+            // Persist loaded settings to active context and refresh current view.
+            highlightManager.savePatterns();
+            filterManager.saveRules();
+            applyFilteringToContent();
+            reapplyHighlighting();
+            if (rightPanelController != null) {
+                rightPanelController.refreshHighlights();
+                rightPanelController.refreshFilters();
+            }
+            statusLabel.setText("Settings loaded: " + selected.get());
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Load Settings Error");
+            alert.setHeaderText("Failed to load settings");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
         }
     }
 
