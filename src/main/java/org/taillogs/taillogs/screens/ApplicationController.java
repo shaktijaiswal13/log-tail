@@ -691,12 +691,14 @@ public class ApplicationController {
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
         int lastEnd = 0;
 
+        // Build spans in source-order: plain text gap, then matched token span.
         for (int i = 0; i < matchPositions.size(); i++) {
             int pos = matchPositions.get(i);
             if (pos > lastEnd) {
                 spansBuilder.add(Collections.emptyList(), pos - lastEnd);
             }
 
+            // Current match gets a stronger style so Enter-navigation is visible.
             String styleClass = (i == currentMatchIndex) ? "search-current" : "search-result";
             spansBuilder.add(Collections.singleton(styleClass), currentSearchTerm.length());
             lastEnd = pos + currentSearchTerm.length();

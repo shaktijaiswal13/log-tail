@@ -112,6 +112,7 @@ public class HighlightManager {
 
     /**
      * Pick readable foreground text color for a given hex background color.
+     * Keeps text legible when users choose very dark or very light highlight colors.
      */
     private String getContrastTextColor(String hexColor) {
         try {
@@ -302,6 +303,8 @@ public class HighlightManager {
                 if (pattern.isEnabled() && pattern.getColor() != null) {
                     String normalizedColor = normalizeColor(pattern.getColor());
                     String colorClass = "highlight-" + normalizedColor.substring(1);
+                    // Background uses the selected highlight color.
+                    // Foreground is auto-picked for contrast/readability.
                     String textColor = getContrastTextColor(normalizedColor);
                     css.append(".").append(colorClass).append(" {\n");
                     css.append("    -rtfx-background-color: ").append(normalizedColor).append(";\n");
