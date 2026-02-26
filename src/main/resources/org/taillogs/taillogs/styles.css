@@ -38,12 +38,13 @@
 .search-result {
     -fx-fill: #000000;
     -fx-font-weight: bold;
-    -fx-underline: true;
+    -rtfx-background-color: #fff59d;
 }
 
 .search-current {
-    -fx-fill: #FFD700;
+    -fx-fill: #000000;
     -fx-font-weight: bold;
+    -rtfx-background-color: #ffe066;
 }
 
 /* Search result line styles - dark blue text, bold, and underlined */

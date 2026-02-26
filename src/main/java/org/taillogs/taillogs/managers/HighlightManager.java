@@ -111,6 +111,21 @@ public class HighlightManager {
     }
 
     /**
+     * Pick readable foreground text color for a given hex background color.
+     */
+    private String getContrastTextColor(String hexColor) {
+        try {
+            int r = Integer.parseInt(hexColor.substring(1, 3), 16);
+            int g = Integer.parseInt(hexColor.substring(3, 5), 16);
+            int b = Integer.parseInt(hexColor.substring(5, 7), 16);
+            double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);
+            return luminance < 140 ? "#ffffff" : "#000000";
+        } catch (Exception e) {
+            return "#000000";
+        }
+    }
+
+    /**
      * Build combined highlighting from log levels and custom patterns.
      * Priority (highest to lowest): search highlights > custom patterns > log levels
      */
@@ -317,8 +332,10 @@ public class HighlightManager {
                 if (pattern.isEnabled() && pattern.getColor() != null) {
                     String normalizedColor = normalizeColor(pattern.getColor());
                     String colorClass = "highlight-" + normalizedColor.substring(1);
+                    String textColor = getContrastTextColor(normalizedColor);
                     css.append(".").append(colorClass).append(" {\n");
-                    css.append("    -fx-fill: ").append(normalizedColor).append(";\n");
+                    css.append("    -rtfx-background-color: ").append(normalizedColor).append(";\n");
+                    css.append("    -fx-fill: ").append(textColor).append(";\n");
                     css.append("    -fx-font-weight: bold;\n");
                     css.append("}\n\n");
                     styleCount++;
