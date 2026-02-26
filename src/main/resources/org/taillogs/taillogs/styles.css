@@ -147,32 +147,21 @@
     -fx-border-color: #999999;
 }
 
-/* SplitPane Divider Styling */
+/* SplitPane Styling - Resizable Divider */
 .split-pane {
     -fx-padding: 0;
     -fx-background-color: #ffffff;
 }
 
+/* Divider styling for horizontal split pane */
 .split-pane-divider {
-    -fx-cursor: col-resize;
-}
-
-.split-pane:horizontal .split-pane-divider {
     -fx-border-color: #cccccc;
     -fx-border-width: 0 1 0 0;
     -fx-background-color: #eeeeee;
     -fx-padding: 0;
-    -fx-min-width: 8;
-    -fx-max-width: 8;
-    -fx-cursor: col-resize;
+    -fx-cursor: h-resize;
 }
 
-.split-pane:horizontal .split-pane-divider:hover {
-    -fx-background-color: #d0d0d0;
-    -fx-cursor: col-resize;
-}
-
-.split-pane:horizontal .split-pane-divider:pressed {
-    -fx-background-color: #b0b0b0;
-    -fx-cursor: col-resize;
+.split-pane:horizontal > .split-pane-divider {
+    -fx-cursor: h-resize;
 }
