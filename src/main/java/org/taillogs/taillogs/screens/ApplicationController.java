@@ -689,43 +689,21 @@ public class ApplicationController {
         }
 
         StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
-        Map<Integer, int[]> lineRanges = new java.util.TreeMap<>();
+        int lastEnd = 0;
 
-        // Convert match positions to unique line ranges.
         for (int i = 0; i < matchPositions.size(); i++) {
             int pos = matchPositions.get(i);
-            int lineStart = content.lastIndexOf('\n', pos);
-            lineStart = (lineStart == -1) ? 0 : lineStart + 1;
-
-            int lineEnd = content.indexOf('\n', pos);
-            lineEnd = (lineEnd == -1) ? content.length() : lineEnd;
-
-            boolean isCurrentMatch = (i == currentMatchIndex);
-            int[] existing = lineRanges.get(lineStart);
-            if (existing == null) {
-                lineRanges.put(lineStart, new int[]{lineEnd, isCurrentMatch ? 1 : 0});
-            } else if (isCurrentMatch) {
-                existing[1] = 1;
-            }
-        }
-
-        int cursor = 0;
-        for (Map.Entry<Integer, int[]> entry : lineRanges.entrySet()) {
-            int lineStart = entry.getKey();
-            int lineEnd = entry.getValue()[0];
-            boolean isCurrentLine = entry.getValue()[1] == 1;
-
-            if (lineStart > cursor) {
-                spansBuilder.add(Collections.emptyList(), lineStart - cursor);
+            if (pos > lastEnd) {
+                spansBuilder.add(Collections.emptyList(), pos - lastEnd);
             }
 
-            String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
-            spansBuilder.add(Collections.singleton(styleClass), lineEnd - lineStart);
-            cursor = lineEnd;
+            String styleClass = (i == currentMatchIndex) ? "search-current" : "search-result";
+            spansBuilder.add(Collections.singleton(styleClass), currentSearchTerm.length());
+            lastEnd = pos + currentSearchTerm.length();
         }
 
-        if (cursor < content.length()) {
-            spansBuilder.add(Collections.emptyList(), content.length() - cursor);
+        if (lastEnd < content.length()) {
+            spansBuilder.add(Collections.emptyList(), content.length() - lastEnd);
         }
 
         StyleSpans<Collection<String>> spans = spansBuilder.create();

@@ -37,20 +37,10 @@
 .search-result {
     -fx-fill: #000000;
     -fx-font-weight: bold;
-    -fx-underline: true;
-}
-
-.search-current {
-    -fx-fill: #FFD700;
-    -fx-font-weight: bold;
-}
-
-.search-result-line {
-    -fx-fill: #000000;
     -rtfx-background-color: #fff59d;
 }
 
-.search-current-line {
+.search-current {
     -fx-fill: #000000;
     -fx-font-weight: bold;
     -rtfx-background-color: #ffe066;
