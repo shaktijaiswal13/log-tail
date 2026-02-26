@@ -45,6 +45,17 @@
     -fx-font-weight: bold;
 }
 
+.search-result-line {
+    -fx-fill: #000000;
+    -rtfx-background-color: #fff59d;
+}
+
+.search-current-line {
+    -fx-fill: #000000;
+    -fx-font-weight: bold;
+    -rtfx-background-color: #ffe066;
+}
+
 /* Modern Action Buttons - Gray/White Theme */
 .action-button {
     -fx-padding: 8 18 8 18;
