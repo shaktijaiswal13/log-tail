@@ -690,7 +690,6 @@ public class ApplicationController {
 
         int lastEnd = 0;
 
-<<<<<<< HEAD
         // Apply highlighting to entire lines
         for (LineRange lineRange : sortedRanges) {
             // Add unstyled content before this line
@@ -712,17 +711,6 @@ public class ApplicationController {
             String styleClass = isCurrentLine ? "search-current-line" : "search-result-line";
             spansBuilder.add(Collections.singleton(styleClass), lineRange.end - lineRange.start);
             lastEnd = lineRange.end;
-=======
-        for (int i = 0; i < matchPositions.size(); i++) {
-            int pos = matchPositions.get(i);
-            if (pos > lastEnd) {
-                spansBuilder.add(Collections.emptyList(), pos - lastEnd);
-            }
-
-            String styleClass = (i == currentMatchIndex) ? "search-current" : "search-result";
-            spansBuilder.add(Collections.singleton(styleClass), currentSearchTerm.length());
-            lastEnd = pos + currentSearchTerm.length();
->>>>>>> dev
         }
 
         if (lastEnd < content.length()) {
