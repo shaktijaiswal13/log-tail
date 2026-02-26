@@ -642,7 +642,7 @@ public class ApplicationController {
             long fileSize = FileOperations.loadFileContent(logArea, currentFilePath, createHighlightingCallback());
             // Initialize file position to current file size so tailing starts from here
             fileThreadRef.setFilePosition(fileSize);
-            fileInfoLabel.setText("Ready");
+            fileInfoLabel.setText("Log Tail");
 
             // Start tailing with the file-specific thread ref and highlighting callback
             pauseMode = false; // Ensure tailing is active
@@ -949,7 +949,7 @@ public class ApplicationController {
             } else {
                 currentFilePath = null;
                 logArea.clear();
-                fileInfoLabel.setText("Ready");
+                fileInfoLabel.setText("Log Tail");
                 statusLabel.setText("No files open");
             }
         }
