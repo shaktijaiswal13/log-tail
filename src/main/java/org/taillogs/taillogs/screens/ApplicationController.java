@@ -15,6 +15,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.Separator;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
@@ -85,6 +86,8 @@ public class ApplicationController {
     private HBox tabBar;
     @FXML
     private VBox rightPanelContainer;
+    @FXML
+    private SplitPane mainSplitPane;
 
     private String currentFilePath;
     private String currentFolderPath;
@@ -149,6 +152,9 @@ public class ApplicationController {
         System.out.println("About to call setupRightPanel()...");
         setupRightPanel();
         System.out.println("setupRightPanel() completed");
+
+        // Setup cursor for SplitPane divider
+        setupSplitPaneDividerCursor();
     }
 
     public void applyAppearanceSettings(AppearanceSettings settings) {
@@ -403,6 +409,33 @@ public class ApplicationController {
             errorLabel.setWrapText(true);
             rightPanelContainer.getChildren().add(errorLabel);
         }
+    }
+
+    private void setupSplitPaneDividerCursor() {
+        if (mainSplitPane == null) {
+            return;
+        }
+
+        // Set cursor for the divider area
+        // Listen for mouse movement to change cursor when over divider
+        mainSplitPane.setOnMouseMoved(event -> {
+            // The divider is typically 8px wide, positioned at the divider position
+            double dividerPos = mainSplitPane.getDividerPositions()[0];
+            double dividerX = dividerPos * mainSplitPane.getWidth();
+            double tolerance = 8; // pixels
+
+            // Check if mouse is near the divider
+            if (event.getX() >= dividerX - tolerance && event.getX() <= dividerX + tolerance) {
+                mainSplitPane.setCursor(Cursor.H_RESIZE);
+            } else {
+                mainSplitPane.setCursor(Cursor.DEFAULT);
+            }
+        });
+
+        // Reset cursor when leaving the SplitPane
+        mainSplitPane.setOnMouseExited(event -> {
+            mainSplitPane.setCursor(Cursor.DEFAULT);
+        });
     }
 
     private void saveRightPanelSettings() {

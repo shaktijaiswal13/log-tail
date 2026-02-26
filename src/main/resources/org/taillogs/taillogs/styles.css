@@ -153,6 +153,10 @@
     -fx-background-color: #ffffff;
 }
 
+.split-pane-divider {
+    -fx-cursor: col-resize;
+}
+
 .split-pane:horizontal .split-pane-divider {
     -fx-border-color: #cccccc;
     -fx-border-width: 0 1 0 0;
@@ -165,8 +169,10 @@
 
 .split-pane:horizontal .split-pane-divider:hover {
     -fx-background-color: #d0d0d0;
+    -fx-cursor: col-resize;
 }
 
 .split-pane:horizontal .split-pane-divider:pressed {
     -fx-background-color: #b0b0b0;
+    -fx-cursor: col-resize;
 }

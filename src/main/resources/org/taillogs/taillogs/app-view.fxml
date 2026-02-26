@@ -61,7 +61,7 @@
 
     <!-- CENTER: Main Content Area with Resizable Right Panel -->
     <center>
-        <SplitPane dividerPositions="0.75" VBox.vgrow="ALWAYS">
+        <SplitPane fx:id="mainSplitPane" dividerPositions="0.75" VBox.vgrow="ALWAYS">
             <!-- Left Panel (Log Area) -->
             <VBox spacing="0" style="-fx-background-color: #ffffff;">
                 <!-- Search Bar -->
