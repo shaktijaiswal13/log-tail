@@ -712,7 +712,15 @@ Location: `~/.tail_logs/`
 
 ## Recent Changes & Git History
 
-### Latest: Tab Switching Bug Fix (2026-02-09)
+### Latest: Right Panel Settings Refinement (2026-02-26)
+
+**Commit:** d2ac2e0
+**Focus:** Refined right panel settings load/save behavior for better UX
+- Improved settings persistence workflow
+- Better handling of per-file vs global settings
+- Enhanced load/save callbacks
+
+### Previous: Tab Switching Bug Fix (2026-02-09)
 
 **Issue Identified & Fixed:**
 - **Bug**: When switching between open file tabs, the HighlightManager and FilterManager retained the previous file's context, causing the old file's patterns and rules to apply to the new file
@@ -869,6 +877,7 @@ For issues or feedback, refer to the project repository or contact the developme
 
 ---
 
-**Last Updated:** 2026-02-09
+**Last Updated:** 2026-02-26
 **Version:** 1.0-SNAPSHOT
-**Status:** Production Ready
+**Status:** Production Ready ✅
+**Latest Commit:** d2ac2e0 - Refine right panel settings load/save behavior
