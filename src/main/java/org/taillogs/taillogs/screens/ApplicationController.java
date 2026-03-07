@@ -27,8 +27,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.Cursor;
 import javafx.application.Platform;
+import javafx.animation.AnimationTimer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -108,6 +110,10 @@ public class ApplicationController {
     private FilterManager filterManager;
     private BookmarkManager bookmarkManager;
     private RightPanelController rightPanelController;
+
+    // Smooth scrolling support
+    private double scrollVelocity = 0;
+    private AnimationTimer scrollAnimator;
 
     public void initialize() {
         tailThreadRef = new TailThreadRef();
@@ -234,10 +240,58 @@ public class ApplicationController {
                              "-fx-text-fill: #333333;";
         logArea.setStyle(logArea.getStyle() + " " + scrollbarCSS);
 
+        // Setup smooth scrolling with momentum
+        setupSmoothScrolling();
+
         // Setup hover effects for buttons
         setupButtonHoverEffects();
     }
     
+    private void setupSmoothScrolling() {
+        final double friction = 0.95;
+        final double minVelocity = 0.3;
+        final double scrollMultiplier = 0.6;
+
+        scrollAnimator = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                if (Math.abs(scrollVelocity) < minVelocity) {
+                    scrollVelocity = 0;
+                    stop();
+                    return;
+                }
+
+                double firstVisible = logArea.getEstimatedScrollY();
+                double totalHeight = logArea.getTotalHeightEstimate();
+                double viewportHeight = logArea.getHeight();
+                double maxScroll = Math.max(0, totalHeight - viewportHeight);
+
+                double newScrollY = firstVisible - scrollVelocity;
+                newScrollY = Math.max(0, Math.min(newScrollY, maxScroll));
+                logArea.scrollYToPixel(newScrollY);
+
+                scrollVelocity *= friction;
+            }
+        };
+
+        logArea.addEventFilter(ScrollEvent.SCROLL, event -> {
+            double deltaY = event.getDeltaY();
+            double deltaX = event.getDeltaX();
+
+            // Handle horizontal scrolling natively - don't consume
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                return;
+            }
+
+            // Only intercept vertical scrolling
+            if (deltaY != 0) {
+                event.consume();
+                scrollVelocity += deltaY * scrollMultiplier;
+                scrollAnimator.start();
+            }
+        });
+    }
+
     private void setupButtonHoverEffects() {
         // Buttons now use CSS styling for hover effects to prevent scaling
         // Just update the base colors based on pause state

@@ -1,4 +1,5 @@
 module org.taillogs.taillogs {
+    requires java.desktop;
     requires javafx.controls;
     requires javafx.fxml;
     requires org.fxmisc.richtext;

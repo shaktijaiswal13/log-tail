@@ -16,8 +16,12 @@ import org.taillogs.taillogs.ui.MenuBarCreator;
 import org.taillogs.taillogs.config.AppearanceSettings;
 import org.taillogs.taillogs.config.PreferencesManager;
 
+import javafx.scene.image.Image;
+
+import java.awt.Taskbar;
 import java.io.File;
 import java.io.IOException;
+import javax.imageio.ImageIO;
 
 public class MainApplication extends Application {
     private Stage primaryStage;
@@ -36,6 +40,16 @@ public class MainApplication extends Application {
         initializeAppScene();
 
         // Set up window properties
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("app-icon.png")));
+        // Set macOS dock icon
+        try {
+            if (Taskbar.isTaskbarSupported()) {
+                Taskbar taskbar = Taskbar.getTaskbar();
+                taskbar.setIconImage(ImageIO.read(getClass().getResourceAsStream("app-icon.png")));
+            }
+        } catch (Exception e) {
+            // Ignore - dock icon is non-critical
+        }
         primaryStage.setTitle("Tail Logs");
         primaryStage.setWidth(1200);
         primaryStage.setHeight(700);
